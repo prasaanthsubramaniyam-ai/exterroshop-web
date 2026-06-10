@@ -34,7 +34,7 @@ export const loginThunk = createAsyncThunk(
       // Using auth.user avoids a second /users/me round-trip whose response
       // the browser might serve from its HTTP cache, hiding a stale avatarUrl.
       const auth = await authService.login(payload);
-      return auth.user;
+      return auth;
     } catch (err) {
       return rejectWithValue(errorMessage(err, "Login failed"));
     }
@@ -75,7 +75,11 @@ const authSlice = createSlice({
     })
       .addCase(loginThunk.fulfilled, (s, a) => {
         s.isLoading = false;
-        s.user = a.payload;
+        if (a.payload.mfaRequired) {
+          // Credentials OK, but no tokens yet — stay unauthenticated
+          return;
+        }
+        s.user = a.payload.user;
         s.isAuthenticated = true;
       })
       .addCase(loginThunk.rejected, (s, a) => {

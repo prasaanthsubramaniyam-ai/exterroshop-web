@@ -9,7 +9,10 @@ export const authService = {
       payload
     );
     const auth = unwrap<AuthResponse>(response);
-    tokenStorage.setTokens(auth.token, auth.refreshToken);
+    // No tokens are issued while an MFA challenge is outstanding
+    if (auth.token && auth.refreshToken) {
+      tokenStorage.setTokens(auth.token, auth.refreshToken);
+    }
     return auth;
   },
 

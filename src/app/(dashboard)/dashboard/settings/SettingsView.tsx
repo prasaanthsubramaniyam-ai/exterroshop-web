@@ -9,6 +9,7 @@ import {
   Languages,
   Lock,
   LogOut,
+  ShieldCheck,
   Moon,
   Trash2,
 } from "lucide-react";
@@ -73,6 +74,20 @@ export function SettingsView() {
           label="Change password"
           description="Update your account password."
           control={<Button size="sm" variant="outline">Change</Button>}
+        />
+        <SettingsRow
+          icon={<ShieldCheck className="size-5" />}
+          label="Two-factor & devices"
+          description="TOTP authenticator setup and active sessions."
+          control={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push("/dashboard/settings/security")}
+            >
+              Manage
+            </Button>
+          }
         />
       </SettingsGroup>
 

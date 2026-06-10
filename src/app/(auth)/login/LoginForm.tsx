@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,8 @@ export function LoginForm() {
   const { login, isLoading } = useAuth();
   const dispatch = useAppDispatch();
   const [showPassword, setShowPassword] = React.useState(false);
+  const [mfaRequired, setMfaRequired] = React.useState(false);
+  const [totpCode, setTotpCode] = React.useState("");
 
   const {
     register,
@@ -40,13 +42,20 @@ export function LoginForm() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await login(values);
+      const auth = await login(
+        mfaRequired ? { ...values, totpCode: totpCode.trim() } : values
+      );
+      if (auth.mfaRequired) {
+        // Credentials valid — backend wants a TOTP code to finish
+        setMfaRequired(true);
+        return;
+      }
       const redirect = search.get("from") ?? "/dashboard";
       router.replace(redirect);
     } catch (err) {
       dispatch(
         pushToast({
-          title: "Sign in failed",
+          title: mfaRequired ? "Verification failed" : "Sign in failed",
           description: (err as Error).message ?? "Please check your credentials.",
           variant: "destructive",
         })
@@ -105,8 +114,37 @@ export function LoginForm() {
         ) : null}
       </div>
 
-      <Button type="submit" size="lg" className="w-full" loading={isLoading}>
-        Sign in
+      {mfaRequired ? (
+        <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-4">
+          <Label htmlFor="totp" className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-primary" />
+            Two-factor code
+          </Label>
+          <Input
+            id="totp"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="6-digit code from your authenticator"
+            maxLength={6}
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+            autoFocus
+          />
+          <p className="text-xs text-muted-foreground">
+            Open Google or Microsoft Authenticator and enter the current code.
+            Lost your device? Use one of your 4-digit recovery codes.
+          </p>
+        </div>
+      ) : null}
+
+      <Button
+        type="submit"
+        size="lg"
+        className="w-full"
+        loading={isLoading}
+        disabled={mfaRequired && totpCode.length < 4}
+      >
+        {mfaRequired ? "Verify code" : "Sign in"}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">

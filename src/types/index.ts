@@ -148,13 +148,17 @@ export interface CreateProductPayload {
 export interface LoginPayload {
   email: string;
   password: string;
+  /** 6-digit TOTP or recovery code — only when the account has MFA enabled. */
+  totpCode?: string;
 }
 
 export interface AuthResponse {
-  token: string;
-  refreshToken: string;
-  user: User;
+  token: string | null;
+  refreshToken: string | null;
+  user: User | null;
   expiresIn: number;
+  /** True when credentials were valid but a TOTP code must be supplied. */
+  mfaRequired?: boolean;
 }
 
 export interface ApiResponse<T> {
