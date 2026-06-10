@@ -8,6 +8,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useLeave } from "@/hooks/useLeave";
 import type { LeaveRequest } from "@/services/leave.service";
+import { ApprovalChain } from "@/components/ems/ApprovalChain";
+import { CorrectionApprovals } from "./CorrectionApprovals";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -89,6 +91,11 @@ function ApprovalCard({
           </div>
           {req.reason && (
             <p className="mt-1.5 text-xs italic text-muted-foreground">"{req.reason}"</p>
+          )}
+          {req.approvalChain && req.approvalChain.length > 0 && (
+            <div className="mt-2">
+              <ApprovalChain chain={req.approvalChain} currentStep={req.currentStep} />
+            </div>
           )}
         </div>
       </div>
@@ -201,6 +208,9 @@ export function ApprovalsView() {
           ))}
         </div>
       )}
+
+      {/* Attendance corrections queue (renders only when there are items) */}
+      <CorrectionApprovals />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { designationService } from "@/services/designation.service";
 import { departmentService } from "@/services/department.service";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import type { Designation, Department } from "@/types";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const INPUT = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary";
 
@@ -30,6 +31,8 @@ export default function DesignationsPage() {
   const [filterDept, setFilterDept] = React.useState<string>("");
   const [showCreate, setShowCreate] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<Designation | null>(null);
+  const { can } = usePermissions();
+  const canManage = can("DESIGNATION_MANAGE");
 
   const load = React.useCallback(() => {
     setLoading(true);
@@ -46,7 +49,12 @@ export default function DesignationsPage() {
 
   const handleToggle = async (d: Designation) => {
     try {
-      await designationService.update(d.id, { active: !d.active });
+      await designationService.update(d.id, {
+        title: d.title,
+        level: d.level,
+        departmentId: d.departmentId ?? null,
+        active: !d.active,
+      });
       load();
     } catch {
       alert("Failed to update designation");
@@ -73,12 +81,14 @@ export default function DesignationsPage() {
             {designations.length} designation{designations.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="size-4" /> Add Designation
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="size-4" /> Add Designation
+          </button>
+        )}
       </div>
 
       {/* Filters */}

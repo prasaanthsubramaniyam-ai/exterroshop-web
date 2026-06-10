@@ -163,4 +163,45 @@ export const attendanceService = {
     client
       .get<{ data: DeviceHistory[] }>(`/attendance/${attendanceId}/devices`)
       .then((r) => unwrap<DeviceHistory[]>(r)),
+
+  // ── Corrections (multi-step approval) ──────────────────────────────────────
+
+  requestCorrection: (payload: {
+    recordId: number; requestedIn?: string; requestedOut?: string; reason?: string;
+  }): Promise<AttendanceCorrection> =>
+    client.post<{ data: AttendanceCorrection }>("/attendance/corrections", payload)
+      .then((r) => unwrap<AttendanceCorrection>(r)),
+
+  getMyCorrections: (): Promise<AttendanceCorrection[]> =>
+    client.get<{ data: AttendanceCorrection[] }>("/attendance/corrections/mine")
+      .then((r) => unwrap<AttendanceCorrection[]>(r)),
+
+  getCorrectionApprovals: (): Promise<AttendanceCorrection[]> =>
+    client.get<{ data: AttendanceCorrection[] }>("/attendance/corrections/approvals")
+      .then((r) => unwrap<AttendanceCorrection[]>(r)),
+
+  approveCorrection: (id: number, note?: string): Promise<AttendanceCorrection> =>
+    client.patch<{ data: AttendanceCorrection }>(`/attendance/corrections/${id}/approve`, { note })
+      .then((r) => unwrap<AttendanceCorrection>(r)),
+
+  rejectCorrection: (id: number, note?: string): Promise<AttendanceCorrection> =>
+    client.patch<{ data: AttendanceCorrection }>(`/attendance/corrections/${id}/reject`, { note })
+      .then((r) => unwrap<AttendanceCorrection>(r)),
 };
+
+export interface AttendanceCorrection {
+  id: number;
+  recordId: number;
+  userId: number;
+  userName?: string;
+  userAvatarUrl?: string;
+  requestedIn?: string;
+  requestedOut?: string;
+  reason?: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  reviewerNote?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  currentStep?: number;
+  approvalChain?: import("./leave.service").LeaveApprovalStep[];
+}

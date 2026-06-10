@@ -312,13 +312,6 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         roles: ["HR", "SUPER_ADMIN"],
       },
       {
-        label: "Volunteers",
-        href: "/dashboard/sports/hr/volunteers",
-        icon: UsersRound,
-        matchPrefix: "/dashboard/sports/hr/volunteers",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
         label: "Teams",
         href: "/dashboard/sports/hr/teams",
         icon: Users,
@@ -375,6 +368,34 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         href: "/dashboard/admin/designations",
         icon: Briefcase,
         matchPrefix: "/dashboard/admin/designations",
+        roles: ["HR", "SUPER_ADMIN"],
+      },
+      {
+        label: "Teams",
+        href: "/dashboard/admin/teams",
+        icon: UsersRound,
+        matchPrefix: "/dashboard/admin/teams",
+        roles: ["HR", "SUPER_ADMIN"],
+      },
+      {
+        label: "Roles & Permissions",
+        href: "/dashboard/admin/roles",
+        icon: ShieldCheck,
+        matchPrefix: "/dashboard/admin/roles",
+        roles: ["HR", "SUPER_ADMIN"],
+      },
+      {
+        label: "Onboard Employee",
+        href: "/dashboard/admin/employees/new",
+        icon: PlusCircle,
+        matchPrefix: "/dashboard/admin/employees",
+        roles: ["HR", "SUPER_ADMIN"],
+      },
+      {
+        label: "Reporting Structure",
+        href: "/dashboard/admin/reporting",
+        icon: Network,
+        matchPrefix: "/dashboard/admin/reporting",
         roles: ["HR", "SUPER_ADMIN"],
       },
       {

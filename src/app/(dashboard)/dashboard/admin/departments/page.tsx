@@ -5,6 +5,7 @@ import { Building2, Plus, Pencil, ToggleLeft, ToggleRight, Search } from "lucide
 import { departmentService } from "@/services/department.service";
 import type { Department } from "@/types";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const INPUT = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary";
 
@@ -14,6 +15,8 @@ export default function DepartmentsPage() {
   const [search, setSearch] = React.useState("");
   const [showCreate, setShowCreate] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<Department | null>(null);
+  const { can } = usePermissions();
+  const canManage = can("DEPARTMENT_MANAGE");
 
   const load = React.useCallback(() => {
     setLoading(true);
@@ -28,7 +31,13 @@ export default function DepartmentsPage() {
 
   const handleToggle = async (dept: Department) => {
     try {
-      await departmentService.update(dept.id, { active: !dept.active });
+      await departmentService.update(dept.id, {
+        name: dept.name,
+        code: dept.code,
+        headId: dept.headId ?? null,
+        parentId: dept.parentId ?? null,
+        active: !dept.active,
+      });
       load();
     } catch {
       alert("Failed to update department");
@@ -52,12 +61,14 @@ export default function DepartmentsPage() {
             {departments.length} department{departments.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="size-4" /> Add Department
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="size-4" /> Add Department
+          </button>
+        )}
       </div>
 
       {/* Search */}

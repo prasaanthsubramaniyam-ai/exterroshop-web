@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useLeave } from "@/hooks/useLeave";
 import type { LeaveBalance, LeaveRequest, LeaveType } from "@/services/leave.service";
+import { ApprovalChain } from "@/components/ems/ApprovalChain";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -201,6 +202,11 @@ function RequestRow({ req, onCancel }: { req: LeaveRequest; onCancel: (id: numbe
           <p className="mt-0.5 text-xs text-muted-foreground">
             Note: <span className="text-foreground">{req.reviewerNote}</span>
           </p>
+        )}
+        {req.approvalChain && req.approvalChain.length > 0 && (
+          <div className="mt-2">
+            <ApprovalChain chain={req.approvalChain} currentStep={req.currentStep} />
+          </div>
         )}
       </div>
       {req.status === "PENDING" && (

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { AnnouncementAudience } from "@/types";
 import { formatTimeAgo } from "@/utils/format";
 import { cn } from "@/lib/utils";
@@ -156,12 +157,16 @@ function CreateModal({ onClose, onCreate }: CreateModalProps) {
 
 export function AnnouncementsView() {
   const { user }                                          = useAuth();
+  const { can, loading: permsLoading }                    = usePermissions();
   const { announcements, loading, error, create, togglePin, remove } = useAnnouncements();
   const [showModal, setShowModal]                         = React.useState(false);
   const [expanded, setExpanded]                           = React.useState<Set<number>>(new Set());
   const [deleting, setDeleting]                           = React.useState<number | null>(null);
 
-  const canManage = CAN_MANAGE.has(user?.role ?? "");
+  // Matrix-driven once permissions load; role fallback only during the load window
+  const canManage = permsLoading
+    ? CAN_MANAGE.has(user?.role ?? "")
+    : can("ANNOUNCEMENT_MANAGE");
 
   const toggleExpand = (id: number) =>
     setExpanded((prev) => {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAttendance } from "@/hooks/useAttendance";
+import { AttendanceCorrections } from "./AttendanceCorrections";
 import type {
   AttendanceRecord,
   WorkMode,
@@ -576,6 +577,9 @@ export function AttendanceView() {
           </div>
         )}
       </div>
+
+      {/* Corrections */}
+      <AttendanceCorrections records={history} />
     </div>
   );
 }

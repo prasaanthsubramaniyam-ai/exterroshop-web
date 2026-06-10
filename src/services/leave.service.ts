@@ -38,6 +38,20 @@ export interface LeaveRequest {
   reviewedAt?:    string;
   reviewerNote?:  string;
   createdAt:      string;
+  // Multi-step approval workflow
+  currentStep?:   number;
+  approvalChain?: LeaveApprovalStep[];
+}
+
+export interface LeaveApprovalStep {
+  stepOrder:    number;
+  label:        string;
+  approverName?: string;
+  approverRole?: string;
+  status:       "PENDING" | "APPROVED" | "REJECTED" | "SKIPPED";
+  actedByName?: string;
+  actedAt?:     string;
+  note?:        string;
 }
 
 export interface ApplyLeavePayload {
