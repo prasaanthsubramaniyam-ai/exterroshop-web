@@ -1,6 +1,9 @@
 /**
- * EMS Navigation Architecture
- * Grouped sidebar sections + EMS-first bottom nav
+ * EMS Navigation Architecture — flat primary nav.
+ *
+ * The sidebar shows ONLY top-level modules; secondary navigation lives
+ * inside each page (SectionTabs / hub cards). Every legacy route keeps
+ * working — it is simply reached via in-page tabs instead of the sidebar.
  */
 
 import {
@@ -9,36 +12,18 @@ import {
   CalendarOff,
   CheckSquare,
   Users,
-  BookUser,
   BarChart3,
   ShoppingBag,
-  Heart,
-  Package,
-  PlusCircle,
-  MessageCircle,
-  Phone,
   Scissors,
   UsersRound,
   SlidersHorizontal,
-  Palette,
   UserCircle,
   Settings,
   Fingerprint,
   MoreHorizontal,
-  CalendarDays,
-  FileText,
-  Building2,
-  Briefcase,
-  Network,
-  Receipt,
   Banknote,
   Monitor,
-  LifeBuoy,
-  ShieldCheck,
   Trophy,
-  Medal,
-  ClipboardList,
-  ImageIcon,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/types";
@@ -49,7 +34,8 @@ export interface EmsNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  matchPrefix?: string;
+  /** Additional path prefixes that should highlight this item. */
+  matchPrefixes?: string[];
   /** Show a live badge: "count" = number pill, "dot" = presence dot */
   badge?: "count" | "dot";
   /** Roles that can see this item. undefined = visible to all authenticated users */
@@ -58,6 +44,7 @@ export interface EmsNavItem {
 
 export interface EmsNavSection {
   id: string;
+  /** Empty label = render items without a section header. */
   label: string;
   items: EmsNavItem[];
 }
@@ -104,12 +91,12 @@ export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   EMPLOYEE_USER: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
-// ── Sidebar sections ──────────────────────────────────────────────────────────
+// ── Sidebar — single flat section ─────────────────────────────────────────────
 
 export const EMS_NAV_SECTIONS: EmsNavSection[] = [
   {
-    id: "workspace",
-    label: "Workspace",
+    id: "main",
+    label: "",
     items: [
       {
         label: "Home",
@@ -120,329 +107,178 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         label: "Attendance",
         href: "/dashboard/attendance",
         icon: Clock,
-        matchPrefix: "/dashboard/attendance",
+        matchPrefixes: ["/dashboard/attendance"],
       },
       {
+        // In-page tabs: My Leave · Holidays
         label: "Leave",
         href: "/dashboard/leave",
         icon: CalendarOff,
-        matchPrefix: "/dashboard/leave",
+        matchPrefixes: ["/dashboard/leave", "/dashboard/holidays"],
       },
       {
         label: "Approvals",
         href: "/dashboard/approvals",
         icon: CheckSquare,
-        matchPrefix: "/dashboard/approvals",
+        matchPrefixes: ["/dashboard/approvals"],
         badge: "count",
         roles: ["MANAGER", "HR", "SUPER_ADMIN"],
       },
       {
-        label: "Holidays",
-        href: "/dashboard/holidays",
-        icon: CalendarDays,
-        matchPrefix: "/dashboard/holidays",
-      },
-    ],
-  },
-  {
-    id: "people",
-    label: "People",
-    items: [
-      {
-        label: "Team",
+        // In-page tabs: Team · Directory · Org Chart
+        label: "People",
         href: "/dashboard/team",
         icon: Users,
-        matchPrefix: "/dashboard/team",
+        matchPrefixes: [
+          "/dashboard/team",
+          "/dashboard/directory",
+          "/dashboard/org-chart",
+        ],
       },
       {
-        label: "Directory",
-        href: "/dashboard/directory",
-        icon: BookUser,
-        matchPrefix: "/dashboard/directory",
+        // Hub page with module cards (Users, Departments, Designations, Teams,
+        // Roles & Permissions, Onboarding, Reporting Structure)
+        label: "Employee Management",
+        href: "/dashboard/admin",
+        icon: UsersRound,
+        matchPrefixes: ["/dashboard/admin", "/dashboard/users"],
+        roles: ["HR", "SUPER_ADMIN"],
       },
       {
-        label: "Org Chart",
-        href: "/dashboard/org-chart",
-        icon: Network,
-        matchPrefix: "/dashboard/org-chart",
+        // Role-aware tabs via sports/layout.tsx (employee + HR sets)
+        label: "Sports & Events",
+        href: "/dashboard/sports",
+        icon: Trophy,
+        matchPrefixes: ["/dashboard/sports"],
       },
       {
         label: "Reports",
         href: "/dashboard/reports",
         icon: BarChart3,
-        matchPrefix: "/dashboard/reports",
+        matchPrefixes: ["/dashboard/reports"],
         roles: ["MANAGER", "HR", "SUPER_ADMIN"],
       },
-    ],
-  },
-  {
-    id: "marketplace",
-    label: "Marketplace",
-    items: [
       {
-        label: "Browse",
-        href: "/dashboard/products",
-        icon: ShoppingBag,
-        matchPrefix: "/dashboard/products",
-      },
-      {
-        label: "Favorites",
-        href: "/dashboard/favorites",
-        icon: Heart,
-      },
-      {
-        label: "My Marketplace",
-        href: "/dashboard/my-products",
-        icon: Package,
-        matchPrefix: "/dashboard/my-products",
-      },
-      {
-        label: "Sell Item",
-        href: "/dashboard/products/new",
-        icon: PlusCircle,
-      },
-      {
-        label: "Chats",
-        href: "/dashboard/chat",
-        icon: MessageCircle,
-        matchPrefix: "/dashboard/chat",
-        badge: "dot",
-      },
-      {
-        label: "Call Requests",
-        href: "/dashboard/call-requests",
-        icon: Phone,
-        matchPrefix: "/dashboard/call-requests",
-      },
-    ],
-  },
-  {
-    id: "finance",
-    label: "Finance",
-    items: [
-      {
-        label: "Expenses",
+        // In-page tabs: Expenses · Payroll (payroll tab gated to FINANCE/SA)
+        label: "Finance",
         href: "/dashboard/finance/expenses",
-        icon: Receipt,
-        matchPrefix: "/dashboard/finance/expenses",
+        icon: Banknote,
+        matchPrefixes: ["/dashboard/finance"],
         roles: ["FINANCE", "SUPER_ADMIN", "MANAGER", "HR"],
       },
       {
-        label: "Payroll",
-        href: "/dashboard/finance/payroll",
-        icon: Banknote,
-        matchPrefix: "/dashboard/finance/payroll",
-        roles: ["FINANCE", "SUPER_ADMIN"],
-      },
-    ],
-  },
-  {
-    id: "it",
-    label: "IT",
-    items: [
-      {
-        label: "Assets",
+        // In-page tabs: Assets · Help Desk
+        label: "IT",
         href: "/dashboard/it/assets",
         icon: Monitor,
-        matchPrefix: "/dashboard/it/assets",
+        matchPrefixes: ["/dashboard/it"],
         roles: ["IT_ADMIN", "SUPER_ADMIN"],
       },
       {
-        label: "Help Desk",
-        href: "/dashboard/it/tickets",
-        icon: LifeBuoy,
-        matchPrefix: "/dashboard/it/tickets",
-        roles: ["IT_ADMIN", "SUPER_ADMIN"],
+        // In-page tabs: Browse · Favorites · My Items · Sell · Chats · Calls
+        label: "Marketplace",
+        href: "/dashboard/products",
+        icon: ShoppingBag,
+        matchPrefixes: [
+          "/dashboard/products",
+          "/dashboard/favorites",
+          "/dashboard/my-products",
+          "/dashboard/chat",
+          "/dashboard/call-requests",
+        ],
+        badge: "dot",
       },
-    ],
-  },
-  {
-    id: "sports",
-    label: "Sports & Events",
-    items: [
-      // ── Employee / All ─────────────────────────────────────────────────────
-      {
-        label: "Upcoming Events",
-        href: "/dashboard/sports",
-        icon: Trophy,
-        matchPrefix: "/dashboard/sports",
-        roles: ["EMPLOYEE_USER", "MANAGER", "STAFF"],
-      },
-      {
-        label: "My Registrations",
-        href: "/dashboard/sports/my-registrations",
-        icon: ClipboardList,
-        matchPrefix: "/dashboard/sports/my-registrations",
-        roles: ["EMPLOYEE_USER", "MANAGER", "STAFF"],
-      },
-      {
-        label: "Event Results",
-        href: "/dashboard/sports/results",
-        icon: Medal,
-        matchPrefix: "/dashboard/sports/results",
-        roles: ["EMPLOYEE_USER", "MANAGER", "STAFF"],
-      },
-      {
-        label: "Gallery",
-        href: "/dashboard/sports/gallery",
-        icon: ImageIcon,
-        matchPrefix: "/dashboard/sports/gallery",
-        roles: ["EMPLOYEE_USER", "MANAGER", "STAFF"],
-      },
-      // ── HR ─────────────────────────────────────────────────────────────────
-      {
-        label: "Sports Dashboard",
-        href: "/dashboard/sports/hr",
-        icon: LayoutDashboard,
-        matchPrefix: "/dashboard/sports/hr",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Events",
-        href: "/dashboard/sports/hr/events",
-        icon: Trophy,
-        matchPrefix: "/dashboard/sports/hr/events",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Participants",
-        href: "/dashboard/sports/hr/participants",
-        icon: Users,
-        matchPrefix: "/dashboard/sports/hr/participants",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Teams",
-        href: "/dashboard/sports/hr/teams",
-        icon: Users,
-        matchPrefix: "/dashboard/sports/hr/teams",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Results",
-        href: "/dashboard/sports/hr/results",
-        icon: Medal,
-        matchPrefix: "/dashboard/sports/hr/results",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Gallery Mgmt",
-        href: "/dashboard/sports/hr/gallery",
-        icon: ImageIcon,
-        matchPrefix: "/dashboard/sports/hr/gallery",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-    ],
-  },
-  {
-    id: "services",
-    label: "Services",
-    items: [
       {
         label: "Beauty Services",
         href: "/wellness/dashboard",
         icon: Scissors,
-      },
-    ],
-  },
-  {
-    id: "admin",
-    label: "Administration",
-    items: [
-      {
-        label: "User Management",
-        href: "/dashboard/users",
-        icon: UsersRound,
-        matchPrefix: "/dashboard/users",
-        roles: ["SUPER_ADMIN"],
+        matchPrefixes: ["/wellness"],
       },
       {
-        label: "Departments",
-        href: "/dashboard/admin/departments",
-        icon: Building2,
-        matchPrefix: "/dashboard/admin/departments",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Designations",
-        href: "/dashboard/admin/designations",
-        icon: Briefcase,
-        matchPrefix: "/dashboard/admin/designations",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Teams",
-        href: "/dashboard/admin/teams",
-        icon: UsersRound,
-        matchPrefix: "/dashboard/admin/teams",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Roles & Permissions",
-        href: "/dashboard/admin/roles",
-        icon: ShieldCheck,
-        matchPrefix: "/dashboard/admin/roles",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Onboard Employee",
-        href: "/dashboard/admin/employees/new",
-        icon: PlusCircle,
-        matchPrefix: "/dashboard/admin/employees",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        label: "Reporting Structure",
-        href: "/dashboard/admin/reporting",
-        icon: Network,
-        matchPrefix: "/dashboard/admin/reporting",
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
+        // In-page tabs: Content · Theme Editor · Audit Logs
         label: "CMS",
         href: "/dashboard/admin/cms",
         icon: SlidersHorizontal,
-        matchPrefix: "/dashboard/admin/cms",
+        matchPrefixes: [
+          "/dashboard/admin/cms",
+          "/dashboard/admin/theme",
+          "/dashboard/admin/audit-logs",
+        ],
         roles: ["SUPER_ADMIN"],
       },
       {
-        label: "Theme Editor",
-        href: "/dashboard/admin/theme",
-        icon: Palette,
-        matchPrefix: "/dashboard/admin/theme",
-        roles: ["SUPER_ADMIN"],
-      },
-      {
-        label: "Audit Logs",
-        href: "/dashboard/admin/audit-logs",
-        icon: ShieldCheck,
-        matchPrefix: "/dashboard/admin/audit-logs",
-        roles: ["SUPER_ADMIN"],
-      },
-    ],
-  },
-  {
-    id: "account",
-    label: "Account",
-    items: [
-      {
-        label: "Payslips",
-        href: "/dashboard/payslips",
-        icon: FileText,
-        matchPrefix: "/dashboard/payslips",
-      },
-      {
-        label: "Profile",
-        href: "/dashboard/profile",
-        icon: UserCircle,
-      },
-      {
+        // Settings page links to: Preferences · Security · Payslips · Profile
         label: "Settings",
         href: "/dashboard/settings",
         icon: Settings,
+        matchPrefixes: [
+          "/dashboard/settings",
+          "/dashboard/profile",
+          "/dashboard/payslips",
+        ],
       },
     ],
   },
+];
+
+// ── In-page tab definitions (single source of truth for SectionTabs) ──────────
+
+export interface SectionTabDef {
+  label: string;
+  href: string;
+  roles?: UserRole[];
+}
+
+export const PEOPLE_TABS: SectionTabDef[] = [
+  { label: "Team",      href: "/dashboard/team" },
+  { label: "Directory", href: "/dashboard/directory" },
+  { label: "Org Chart", href: "/dashboard/org-chart" },
+];
+
+export const LEAVE_TABS: SectionTabDef[] = [
+  { label: "My Leave", href: "/dashboard/leave" },
+  { label: "Holidays", href: "/dashboard/holidays" },
+];
+
+export const MARKETPLACE_TABS: SectionTabDef[] = [
+  { label: "Browse",        href: "/dashboard/products" },
+  { label: "Favorites",     href: "/dashboard/favorites" },
+  { label: "My Items",      href: "/dashboard/my-products" },
+  { label: "Sell Item",     href: "/dashboard/products/new" },
+  { label: "Chats",         href: "/dashboard/chat" },
+  { label: "Call Requests", href: "/dashboard/call-requests" },
+];
+
+export const FINANCE_TABS: SectionTabDef[] = [
+  { label: "Expenses", href: "/dashboard/finance/expenses" },
+  { label: "Payroll",  href: "/dashboard/finance/payroll", roles: ["FINANCE", "SUPER_ADMIN"] },
+];
+
+export const IT_TABS: SectionTabDef[] = [
+  { label: "Assets",    href: "/dashboard/it/assets" },
+  { label: "Help Desk", href: "/dashboard/it/tickets" },
+];
+
+export const CMS_TABS: SectionTabDef[] = [
+  { label: "Content",      href: "/dashboard/admin/cms" },
+  { label: "Theme Editor", href: "/dashboard/admin/theme" },
+  { label: "Audit Logs",   href: "/dashboard/admin/audit-logs" },
+];
+
+export const SPORTS_EMPLOYEE_TABS: SectionTabDef[] = [
+  { label: "Upcoming Events",  href: "/dashboard/sports" },
+  { label: "My Registrations", href: "/dashboard/sports/my-registrations" },
+  { label: "Results",          href: "/dashboard/sports/results" },
+  { label: "Gallery",          href: "/dashboard/sports/gallery" },
+];
+
+export const SPORTS_HR_TABS: SectionTabDef[] = [
+  { label: "Dashboard",    href: "/dashboard/sports/hr" },
+  { label: "Events",       href: "/dashboard/sports/hr/events" },
+  { label: "Participants", href: "/dashboard/sports/hr/participants" },
+  { label: "Teams",        href: "/dashboard/sports/hr/teams" },
+  { label: "Results",      href: "/dashboard/sports/hr/results" },
+  { label: "Gallery",      href: "/dashboard/sports/hr/gallery" },
 ];
 
 // ── Bottom nav (mobile) ───────────────────────────────────────────────────────

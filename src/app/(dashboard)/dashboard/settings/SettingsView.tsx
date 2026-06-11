@@ -7,9 +7,11 @@ import {
   Eye,
   Globe,
   Languages,
+  FileText,
   Lock,
   LogOut,
   ShieldCheck,
+  UserCircle,
   Moon,
   Trash2,
 } from "lucide-react";
@@ -92,6 +94,26 @@ export function SettingsView() {
       </SettingsGroup>
 
       <SettingsGroup title="Account">
+        <SettingsRow
+          icon={<UserCircle className="size-5" />}
+          label="My profile"
+          description="Personal details, avatar and contact info."
+          control={
+            <Button size="sm" variant="outline" onClick={() => router.push("/dashboard/profile")}>
+              Open
+            </Button>
+          }
+        />
+        <SettingsRow
+          icon={<FileText className="size-5" />}
+          label="Payslips"
+          description="View and download your monthly payslips."
+          control={
+            <Button size="sm" variant="outline" onClick={() => router.push("/dashboard/payslips")}>
+              Open
+            </Button>
+          }
+        />
         <SettingsRow
           icon={<LogOut className="size-5" />}
           label="Sign out"

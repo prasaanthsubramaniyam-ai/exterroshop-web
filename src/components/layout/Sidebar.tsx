@@ -32,29 +32,39 @@ function getAllItems(role: UserRole | undefined): EmsNavItem[] {
   );
 }
 
+function matchesPrefixes(current: string, item: EmsNavItem): boolean {
+  return (item.matchPrefixes ?? []).some(
+    (p) => current === p || current.startsWith(p + "/")
+  );
+}
+
 function isActive(
   current: string,
   item: EmsNavItem,
-  allItems: EmsNavItem[],
-  isOwnProductDetail?: boolean
+  allItems: EmsNavItem[]
 ): boolean {
-  // When the user is viewing their own product detail, "My Marketplace" wins;
-  // "Browse" must NOT match even though its prefix covers /dashboard/products/*.
-  if (isOwnProductDetail) {
-    if (item.href === "/dashboard/my-products") return true;
-    if (item.matchPrefix === "/dashboard/products") return false;
-  }
-
   if (current === item.href) return true;
-  if (item.matchPrefix && (current === item.matchPrefix || current.startsWith(item.matchPrefix + "/"))) {
-    const moreSpecific = allItems.some(
-      (other) =>
-        other.href !== item.href &&
-        (current === other.href ||
-          (other.matchPrefix &&
-            (current === other.matchPrefix || current.startsWith(other.matchPrefix + "/"))))
+  if (matchesPrefixes(current, item)) {
+    // If another item matches more specifically (longer prefix or exact href),
+    // it wins — e.g. CMS (/dashboard/admin/cms) beats Employee Management
+    // (/dashboard/admin) when viewing a CMS page.
+    const myLongest = Math.max(
+      ...(item.matchPrefixes ?? []).filter(
+        (p) => current === p || current.startsWith(p + "/")
+      ).map((p) => p.length)
     );
-    return !moreSpecific;
+    const beaten = allItems.some((other) => {
+      if (other.href === item.href) return false;
+      if (current === other.href) return true;
+      const otherLongest = Math.max(
+        0,
+        ...(other.matchPrefixes ?? []).filter(
+          (p) => current === p || current.startsWith(p + "/")
+        ).map((p) => p.length)
+      );
+      return otherLongest > myLongest;
+    });
+    return !beaten;
   }
   return false;
 }
@@ -97,16 +107,6 @@ export function Sidebar() {
 
   const userRole = user?.role as UserRole | undefined;
   const allItems = getAllItems(userRole);
-
-  // Detect when the user is viewing their OWN product detail page so the
-  // sidebar can highlight "My Marketplace" instead of "Browse".
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const selectedProduct = useAppSelector((s) => (s as any).products?.selected ?? null);
-  const isOwnProductDetail = React.useMemo(() => {
-    if (!/^\/dashboard\/products\/\d+$/.test(pathname)) return false;
-    if (!selectedProduct || !user) return false;
-    return selectedProduct.seller?.id != null && selectedProduct.seller.id === user.id;
-  }, [pathname, selectedProduct, user]);
 
   // ── Section collapse (persisted in localStorage) ─────────────────────────
 
@@ -247,8 +247,8 @@ export function Sidebar() {
               return (
                 <div key={section.id} className={cn(sectionIdx > 0 && "mt-4")}>
 
-                  {/* Section label + collapse toggle */}
-                  {!collapsed && (
+                  {/* Section label + collapse toggle (skipped for unlabeled sections) */}
+                  {!collapsed && section.label && (
                     <button
                       type="button"
                       onClick={() => toggleSection(section.id)}
@@ -267,7 +267,7 @@ export function Sidebar() {
                   {!isSectionCollapsed && (
                     <ul className={cn("space-y-0.5", collapsed && sectionIdx > 0 && "mt-1")}>
                       {section.items.map((item) => {
-                        const active = isActive(pathname, item, allItems, isOwnProductDetail);
+                        const active = isActive(pathname, item, allItems);
                         const Icon   = item.icon;
                         const showCount =
                           item.badge === "count" &&
