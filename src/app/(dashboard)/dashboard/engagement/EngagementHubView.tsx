@@ -51,7 +51,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/recognition",
     icon: Star,
     tint: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
-    live: false,
+    live: true,
   },
   {
     title: "Polls",
