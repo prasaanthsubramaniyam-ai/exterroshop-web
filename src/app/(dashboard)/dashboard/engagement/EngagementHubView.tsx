@@ -59,7 +59,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/polls",
     icon: BarChart3,
     tint: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-    live: false,
+    live: true,
   },
   {
     title: "Surveys",

@@ -50,4 +50,69 @@ export const engagementService = {
     );
     return unwrap<CelebrationWish>(res);
   },
+
+  // ── Polls ────────────────────────────────────────────────────────────────
+
+  async listPolls(): Promise<Poll[]> {
+    const res = await client.get<{ data: Poll[] }>("/engagement/polls");
+    return unwrap<Poll[]>(res);
+  },
+
+  async getPoll(id: number): Promise<Poll> {
+    const res = await client.get<{ data: Poll }>(`/engagement/polls/${id}`);
+    return unwrap<Poll>(res);
+  },
+
+  async createPoll(payload: CreatePollPayload): Promise<Poll> {
+    const res = await client.post<{ data: Poll }>("/engagement/polls", payload);
+    return unwrap<Poll>(res);
+  },
+
+  async votePoll(id: number, optionIds: number[]): Promise<Poll> {
+    const res = await client.post<{ data: Poll }>(
+      `/engagement/polls/${id}/vote`,
+      { optionIds }
+    );
+    return unwrap<Poll>(res);
+  },
+
+  async closePoll(id: number): Promise<Poll> {
+    const res = await client.patch<{ data: Poll }>(`/engagement/polls/${id}/close`);
+    return unwrap<Poll>(res);
+  },
+
+  async deletePoll(id: number): Promise<void> {
+    await client.delete(`/engagement/polls/${id}`);
+  },
 };
+
+export interface PollOption {
+  id: number;
+  text: string;
+  voteCount: number;
+  percent: number;
+}
+
+export interface Poll {
+  id: number;
+  question: string;
+  multiSelect: boolean;
+  anonymous: boolean;
+  status: "OPEN" | "CLOSED";
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  closesAt: string | null;
+  closedAt: string | null;
+  totalVoters: number;
+  options: PollOption[];
+  myVotes: number[];
+}
+
+export interface CreatePollPayload {
+  question: string;
+  options: string[];
+  multiSelect?: boolean;
+  anonymous?: boolean;
+  closesAt?: string | null;
+}
