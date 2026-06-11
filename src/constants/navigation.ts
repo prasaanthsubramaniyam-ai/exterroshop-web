@@ -23,7 +23,7 @@ import {
   MoreHorizontal,
   Banknote,
   Monitor,
-  Trophy,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/types";
@@ -145,11 +145,13 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         roles: ["HR", "SUPER_ADMIN"],
       },
       {
-        // Role-aware tabs via sports/layout.tsx (employee + HR sets)
-        label: "Sports & Events",
-        href: "/dashboard/sports",
-        icon: Trophy,
-        matchPrefixes: ["/dashboard/sports"],
+        // Hub page with module cards (Sports, Recognition, Polls,
+        // Celebrations, Surveys, Challenges, CSR, Learning, Wellness,
+        // Ideas, Clubs). Sports keeps its own /dashboard/sports route.
+        label: "Engagement",
+        href: "/dashboard/engagement",
+        icon: Sparkles,
+        matchPrefixes: ["/dashboard/engagement", "/dashboard/sports"],
       },
       {
         label: "Reports",
