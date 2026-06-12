@@ -115,7 +115,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/clubs",
     icon: UsersRound,
     tint: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-    live: false,
+    live: true,
   },
 ];
 

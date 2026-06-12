@@ -419,3 +419,79 @@ export const activitiesService = {
     return unwrap<ActivityParticipant>(res);
   },
 };
+
+// ── Clubs ────────────────────────────────────────────────────────────────────
+
+export interface Club {
+  id: number;
+  name: string;
+  description: string | null;
+  icon: string;
+  color: string;
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  memberCount: number;
+  joinedByMe: boolean;
+  myRole: "MEMBER" | "ADMIN" | null;
+}
+
+export interface ClubPost {
+  id: number;
+  clubId: number;
+  authorId: number;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  message: string;
+  likeCount: number;
+  likedByMe: boolean;
+  createdAt: string;
+}
+
+export interface CreateClubPayload {
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+}
+
+export const clubsService = {
+  async list(scope: "all" | "mine" = "all"): Promise<Club[]> {
+    const res = await client.get<{ data: Club[] }>(`/engagement/clubs?scope=${scope}`);
+    return unwrap<Club[]>(res);
+  },
+  async get(id: number): Promise<Club> {
+    const res = await client.get<{ data: Club }>(`/engagement/clubs/${id}`);
+    return unwrap<Club>(res);
+  },
+  async create(payload: CreateClubPayload): Promise<Club> {
+    const res = await client.post<{ data: Club }>("/engagement/clubs", payload);
+    return unwrap<Club>(res);
+  },
+  async remove(id: number): Promise<void> {
+    await client.delete(`/engagement/clubs/${id}`);
+  },
+  async join(id: number): Promise<Club> {
+    const res = await client.post<{ data: Club }>(`/engagement/clubs/${id}/join`);
+    return unwrap<Club>(res);
+  },
+  async leave(id: number): Promise<Club> {
+    const res = await client.delete<{ data: Club }>(`/engagement/clubs/${id}/join`);
+    return unwrap<Club>(res);
+  },
+  async posts(id: number): Promise<ClubPost[]> {
+    const res = await client.get<{ data: ClubPost[] }>(`/engagement/clubs/${id}/posts`);
+    return unwrap<ClubPost[]>(res);
+  },
+  async post(id: number, message: string): Promise<ClubPost> {
+    const res = await client.post<{ data: ClubPost }>(`/engagement/clubs/${id}/posts`, { message });
+    return unwrap<ClubPost>(res);
+  },
+  async toggleLike(postId: number): Promise<ClubPost> {
+    const res = await client.post<{ data: ClubPost }>(`/engagement/clubs/posts/${postId}/like`);
+    return unwrap<ClubPost>(res);
+  },
+  async deletePost(postId: number): Promise<void> {
+    await client.delete(`/engagement/clubs/posts/${postId}`);
+  },
+};
