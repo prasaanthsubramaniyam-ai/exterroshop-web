@@ -328,3 +328,94 @@ export const surveysService = {
     await client.delete(`/engagement/surveys/${id}`);
   },
 };
+
+// ── Activities (Challenges / CSR / Learning / Wellness) ─────────────────────
+
+export type ActivityKind = "CHALLENGE" | "CSR" | "LEARNING" | "WELLNESS";
+export type RegistrationStatus = "REGISTERED" | "COMPLETED" | "NO_SHOW";
+
+export interface Activity {
+  id: number;
+  kind: ActivityKind;
+  title: string;
+  description: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+  location: string | null;
+  capacity: number | null;
+  pointsReward: number;
+  status: "OPEN" | "CLOSED";
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  closedAt: string | null;
+  registrationCount: number;
+  myStatus: RegistrationStatus | null;
+}
+
+export interface ActivityParticipant {
+  id: number;
+  userId: number;
+  userName: string;
+  userAvatarUrl: string | null;
+  status: RegistrationStatus;
+  hoursLogged: number | null;
+  notes: string | null;
+  registeredAt: string;
+  completedAt: string | null;
+}
+
+export interface CreateActivityPayload {
+  kind: ActivityKind;
+  title: string;
+  description?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  location?: string;
+  capacity?: number | null;
+  pointsReward?: number;
+}
+
+export const activitiesService = {
+  async list(kind?: ActivityKind): Promise<Activity[]> {
+    const qs = kind ? `?kind=${kind}` : "";
+    const res = await client.get<{ data: Activity[] }>(`/engagement/activities${qs}`);
+    return unwrap<Activity[]>(res);
+  },
+  async create(payload: CreateActivityPayload): Promise<Activity> {
+    const res = await client.post<{ data: Activity }>("/engagement/activities", payload);
+    return unwrap<Activity>(res);
+  },
+  async close(id: number): Promise<Activity> {
+    const res = await client.patch<{ data: Activity }>(`/engagement/activities/${id}/close`);
+    return unwrap<Activity>(res);
+  },
+  async remove(id: number): Promise<void> {
+    await client.delete(`/engagement/activities/${id}`);
+  },
+  async register(id: number): Promise<Activity> {
+    const res = await client.post<{ data: Activity }>(`/engagement/activities/${id}/register`);
+    return unwrap<Activity>(res);
+  },
+  async unregister(id: number): Promise<Activity> {
+    const res = await client.delete<{ data: Activity }>(`/engagement/activities/${id}/register`);
+    return unwrap<Activity>(res);
+  },
+  async participants(id: number): Promise<ActivityParticipant[]> {
+    const res = await client.get<{ data: ActivityParticipant[] }>(`/engagement/activities/${id}/participants`);
+    return unwrap<ActivityParticipant[]>(res);
+  },
+  async markCompletion(
+    id: number,
+    userId: number,
+    status: "COMPLETED" | "NO_SHOW",
+    hoursLogged?: number | null,
+    notes?: string
+  ): Promise<ActivityParticipant> {
+    const res = await client.patch<{ data: ActivityParticipant }>(
+      `/engagement/activities/${id}/participants/${userId}`,
+      { status, hoursLogged: hoursLogged ?? null, notes: notes ?? null }
+    );
+    return unwrap<ActivityParticipant>(res);
+  },
+};

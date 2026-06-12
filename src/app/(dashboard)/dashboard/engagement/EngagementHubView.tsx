@@ -75,7 +75,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/challenges",
     icon: Target,
     tint: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
-    live: false,
+    live: true,
   },
   {
     title: "CSR Activities",
@@ -83,7 +83,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/csr",
     icon: HeartHandshake,
     tint: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
-    live: false,
+    live: true,
   },
   {
     title: "Learning Events",
@@ -91,7 +91,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/learning",
     icon: GraduationCap,
     tint: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
-    live: false,
+    live: true,
   },
   {
     title: "Wellness Programs",
@@ -99,7 +99,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/wellness",
     icon: Dumbbell,
     tint: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
-    live: false,
+    live: true,
   },
   {
     title: "Suggestions & Ideas",
