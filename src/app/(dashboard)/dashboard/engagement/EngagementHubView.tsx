@@ -67,7 +67,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/surveys",
     icon: ClipboardList,
     tint: "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
-    live: false,
+    live: true,
   },
   {
     title: "Challenges",

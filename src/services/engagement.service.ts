@@ -232,3 +232,99 @@ export const ideasService = {
     await client.delete(`/engagement/ideas/${id}`);
   },
 };
+
+// ── Surveys ──────────────────────────────────────────────────────────────────
+
+export type QuestionType = "SINGLE_CHOICE" | "MULTI_CHOICE" | "RATING" | "TEXT";
+
+export interface SurveyOption {
+  id: number;
+  text: string;
+}
+export interface SurveyQuestion {
+  id: number;
+  text: string;
+  type: QuestionType;
+  required: boolean;
+  options: SurveyOption[];
+}
+export interface Survey {
+  id: number;
+  title: string;
+  description: string | null;
+  status: "OPEN" | "CLOSED";
+  anonymous: boolean;
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  closesAt: string | null;
+  responseCount: number;
+  respondedByMe: boolean;
+  questions: SurveyQuestion[];
+}
+
+export interface CreateSurveyPayload {
+  title: string;
+  description?: string;
+  anonymous?: boolean;
+  closesAt?: string | null;
+  questions: {
+    text: string;
+    type: QuestionType;
+    required?: boolean;
+    options?: string[];
+  }[];
+}
+
+export interface SubmitSurveyPayload {
+  answers: {
+    questionId: number;
+    optionIds?: number[];
+    rating?: number;
+    textValue?: string;
+  }[];
+}
+
+export interface SurveyResults {
+  surveyId: number;
+  title: string;
+  responseCount: number;
+  questions: {
+    questionId: number;
+    text: string;
+    type: QuestionType;
+    optionCounts: { optionId: number; text: string; count: number; percent: number }[] | null;
+    averageRating: number | null;
+    ratingDistribution: number[] | null;
+    textAnswers: string[] | null;
+  }[];
+}
+
+export const surveysService = {
+  async list(): Promise<Survey[]> {
+    const res = await client.get<{ data: Survey[] }>("/engagement/surveys");
+    return unwrap<Survey[]>(res);
+  },
+  async get(id: number): Promise<Survey> {
+    const res = await client.get<{ data: Survey }>(`/engagement/surveys/${id}`);
+    return unwrap<Survey>(res);
+  },
+  async create(payload: CreateSurveyPayload): Promise<Survey> {
+    const res = await client.post<{ data: Survey }>("/engagement/surveys", payload);
+    return unwrap<Survey>(res);
+  },
+  async submit(id: number, payload: SubmitSurveyPayload): Promise<void> {
+    await client.post(`/engagement/surveys/${id}/submit`, payload);
+  },
+  async results(id: number): Promise<SurveyResults> {
+    const res = await client.get<{ data: SurveyResults }>(`/engagement/surveys/${id}/results`);
+    return unwrap<SurveyResults>(res);
+  },
+  async close(id: number): Promise<Survey> {
+    const res = await client.patch<{ data: Survey }>(`/engagement/surveys/${id}/close`);
+    return unwrap<Survey>(res);
+  },
+  async remove(id: number): Promise<void> {
+    await client.delete(`/engagement/surveys/${id}`);
+  },
+};
