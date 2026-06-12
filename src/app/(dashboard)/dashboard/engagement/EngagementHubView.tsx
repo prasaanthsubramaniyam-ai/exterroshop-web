@@ -107,7 +107,7 @@ const MODULES: EngagementModule[] = [
     href: "/dashboard/engagement/ideas",
     icon: Lightbulb,
     tint: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
-    live: false,
+    live: true,
   },
   {
     title: "Clubs & Communities",

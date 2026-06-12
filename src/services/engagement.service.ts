@@ -180,3 +180,55 @@ export const recognitionService = {
     return unwrap<number>(res);
   },
 };
+
+// ── Ideas ────────────────────────────────────────────────────────────────────
+
+export type IdeaStatus = "NEW" | "REVIEWING" | "PLANNED" | "DONE" | "DECLINED";
+
+export interface Idea {
+  id: number;
+  authorId: number;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  title: string;
+  description: string;
+  status: IdeaStatus;
+  statusNote: string | null;
+  voteCount: number;
+  votedByMe: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const ideasService = {
+  async list(opts: { status?: IdeaStatus; sort?: "newest" | "trending" } = {}): Promise<Idea[]> {
+    const params = new URLSearchParams();
+    if (opts.status) params.set("status", opts.status);
+    if (opts.sort) params.set("sort", opts.sort);
+    const qs = params.toString();
+    const res = await client.get<{ data: Idea[] }>(`/engagement/ideas${qs ? `?${qs}` : ""}`);
+    return unwrap<Idea[]>(res);
+  },
+
+  async submit(title: string, description: string): Promise<Idea> {
+    const res = await client.post<{ data: Idea }>("/engagement/ideas", { title, description });
+    return unwrap<Idea>(res);
+  },
+
+  async toggleVote(id: number): Promise<Idea> {
+    const res = await client.post<{ data: Idea }>(`/engagement/ideas/${id}/vote`);
+    return unwrap<Idea>(res);
+  },
+
+  async updateStatus(id: number, status: IdeaStatus, note?: string): Promise<Idea> {
+    const res = await client.patch<{ data: Idea }>(`/engagement/ideas/${id}/status`, {
+      status,
+      note: note ?? null,
+    });
+    return unwrap<Idea>(res);
+  },
+
+  async remove(id: number): Promise<void> {
+    await client.delete(`/engagement/ideas/${id}`);
+  },
+};
