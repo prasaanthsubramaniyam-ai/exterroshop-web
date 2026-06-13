@@ -14,6 +14,7 @@ import {
   Cake,
   Lightbulb,
   UsersRound,
+  Gift,
   ChevronRight,
   Medal,
   Zap,
@@ -24,6 +25,7 @@ import {
   MapPin,
   Users,
   Award,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,7 @@ import {
   type LeaderboardEntry,
   type Activity,
 } from "@/services/engagement.service";
+import { rewardsService, type DeptLeaderboardEntry } from "@/services/rewards.service";
 
 // ── Module grid data ──────────────────────────────────────────────────────────
 
@@ -60,6 +63,8 @@ const MODULES: EngagementModule[] = [
   { title: "Wellness Programs",  description: "Fitness and mental-health programs",      href: "/dashboard/engagement/wellness",        icon: Dumbbell,      tint: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" },
   { title: "Suggestions & Ideas",description: "Idea box with upvotes and status",        href: "/dashboard/engagement/ideas",           icon: Lightbulb,     tint: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" },
   { title: "Clubs & Communities",description: "Interest groups and club feeds",          href: "/dashboard/engagement/clubs",           icon: UsersRound,    tint: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
+  { title: "Rewards Store",      description: "Spend your points on great rewards",     href: "/dashboard/engagement/rewards",         icon: Gift,          tint: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" },
+  { title: "Hall of Fame",       description: "Champions, badges and dept rankings",    href: "/dashboard/engagement/hall-of-fame",    icon: Trophy,        tint: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
 ];
 
 // ── Avatar helper ─────────────────────────────────────────────────────────────
@@ -199,6 +204,15 @@ function RecognitionFeed({ feed }: { feed: Recognition[] | null }) {
 // ── Leaderboard snapshot ──────────────────────────────────────────────────────
 
 function LeaderboardSnapshot({ rows }: { rows: LeaderboardEntry[] | null }) {
+  const [view,     setView]     = React.useState<"people" | "dept">("people");
+  const [deptRows, setDeptRows] = React.useState<DeptLeaderboardEntry[] | null>(null);
+
+  React.useEffect(() => {
+    if (view === "dept" && deptRows === null) {
+      rewardsService.deptLeaderboard("month").then(setDeptRows).catch(() => setDeptRows([]));
+    }
+  }, [view, deptRows]);
+
   const medal = (rank: number) =>
     rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : null;
 
@@ -208,35 +222,67 @@ function LeaderboardSnapshot({ rows }: { rows: LeaderboardEntry[] | null }) {
         <h2 className="flex items-center gap-2 font-semibold">
           <Trophy className="size-4 text-amber-500" /> Top performers
         </h2>
-        <Link href="/dashboard/engagement/recognition" className="text-xs font-medium text-primary hover:underline">
-          Full board →
-        </Link>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-0.5 rounded-lg border border-border bg-muted/30 p-0.5">
+            <button onClick={() => setView("people")}
+              className={cn("rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors",
+                view === "people" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+              )}>
+              People
+            </button>
+            <button onClick={() => setView("dept")}
+              className={cn("rounded-md px-2 py-0.5 text-[10px] font-semibold transition-colors",
+                view === "dept" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
+              )}>
+              Dept
+            </button>
+          </div>
+          <Link href="/dashboard/engagement/hall-of-fame" className="text-xs font-medium text-primary hover:underline">
+            Hall of Fame →
+          </Link>
+        </div>
       </div>
 
       <div className="divide-y divide-border">
-        {rows === null && (
-          <div className="flex justify-center py-10">
-            <Loader2 className="size-5 animate-spin text-muted-foreground" />
-          </div>
+        {view === "people" ? (
+          <>
+            {rows === null && <div className="flex justify-center py-10"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>}
+            {rows?.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No points yet this month</p>}
+            {rows?.slice(0, 5).map((r) => (
+              <div key={r.userId} className="flex items-center gap-3 px-5 py-3">
+                <span className="w-6 text-center text-base">
+                  {medal(r.rank) ?? <span className="text-xs font-bold text-muted-foreground">{r.rank}</span>}
+                </span>
+                <Avatar name={r.name} url={r.avatarUrl} size={8} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{r.name}</p>
+                  {r.department && <p className="truncate text-[11px] text-muted-foreground">{r.department}</p>}
+                </div>
+                <span className="text-sm font-bold tabular-nums text-primary">{r.points.toLocaleString()}</span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {deptRows === null && <div className="flex justify-center py-10"><Loader2 className="size-5 animate-spin text-muted-foreground" /></div>}
+            {deptRows?.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No department data yet</p>}
+            {deptRows?.slice(0, 5).map((r) => (
+              <div key={r.department} className="flex items-center gap-3 px-5 py-3">
+                <span className="w-6 text-center text-base">
+                  {medal(r.rank) ?? <span className="text-xs font-bold text-muted-foreground">{r.rank}</span>}
+                </span>
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                  <Building2 className="size-3.5 text-blue-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{r.department}</p>
+                  <p className="text-[11px] text-muted-foreground">{r.memberCount} members · avg {r.avgPoints.toFixed(0)} pts</p>
+                </div>
+                <span className="text-sm font-bold tabular-nums text-primary">{r.totalPoints.toLocaleString()}</span>
+              </div>
+            ))}
+          </>
         )}
-        {rows?.length === 0 && (
-          <p className="py-8 text-center text-sm text-muted-foreground">No points yet this month</p>
-        )}
-        {rows?.slice(0, 5).map((r) => (
-          <div key={r.userId} className="flex items-center gap-3 px-5 py-3">
-            <span className="w-6 text-center text-base">
-              {medal(r.rank) ?? <span className="text-xs font-bold text-muted-foreground">{r.rank}</span>}
-            </span>
-            <Avatar name={r.name} url={r.avatarUrl} size={8} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{r.name}</p>
-              {r.department && (
-                <p className="truncate text-[11px] text-muted-foreground">{r.department}</p>
-              )}
-            </div>
-            <span className="text-sm font-bold tabular-nums text-primary">{r.points.toLocaleString()}</span>
-          </div>
-        ))}
       </div>
     </div>
   );

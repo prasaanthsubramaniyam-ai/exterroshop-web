@@ -45,6 +45,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/admin/teams":              "Teams",
   "/dashboard/admin/roles":              "Roles & Permissions",
   "/dashboard/admin/reporting":          "Reporting Structure",
+  "/dashboard/engagement/rewards":        "Rewards Store",
+  "/dashboard/engagement/hall-of-fame":  "Hall of Fame",
   "/dashboard/admin/cms":                "CMS & Branding",
   "/dashboard/admin/theme":              "Theme Editor",
   "/dashboard/admin/audit-logs":         "Audit Logs",
