@@ -18,6 +18,7 @@ import {
   type ReactionType,
   type PostType,
 } from "@/services/engagement.service";
+import { MentionTextarea, renderWithMentions } from "@/components/MentionTextarea";
 
 // ── Reaction metadata ──────────────────────────────────────────────────────────
 
@@ -144,17 +145,17 @@ function CommentInput({ postId, onAdded, parentId }: {
     <div className="flex items-center gap-2">
       <Avatar name={user?.name ?? "?"} avatarUrl={user?.avatarUrl} size={32} />
       <div className="flex flex-1 items-center gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2">
-        <input
+        <MentionTextarea
+          singleLine
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={setText}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }}}
-          placeholder="Write a comment…"
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          placeholder="Write a comment… (type @ to mention)"
         />
         <button
           onClick={submit}
           disabled={saving || !text.trim()}
-          className="text-primary disabled:opacity-40"
+          className="text-primary disabled:opacity-40 shrink-0"
         >
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
         </button>
@@ -256,7 +257,9 @@ function PostCard({ post, onUpdate }: {
 
       {/* Content */}
       {post.content && (
-        <p className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        <p className="px-4 pb-3 text-sm leading-relaxed whitespace-pre-wrap">
+          {renderWithMentions(post.content)}
+        </p>
       )}
 
       {/* Media */}
@@ -350,7 +353,7 @@ function CommentItem({ comment, postId }: { comment: PostComment; postId: number
         <div className="flex-1 min-w-0">
           <div className="rounded-2xl bg-card border border-border/50 px-3 py-2">
             <p className="text-xs font-semibold">{comment.authorName}</p>
-            <p className="text-sm mt-0.5">{comment.content}</p>
+            <p className="text-sm mt-0.5">{renderWithMentions(comment.content)}</p>
           </div>
           <div className="flex items-center gap-3 mt-1 px-1">
             <span className="text-[10px] text-muted-foreground">{formatTimeAgo(comment.createdAt)}</span>
@@ -368,7 +371,7 @@ function CommentItem({ comment, postId }: { comment: PostComment; postId: number
               <Avatar name={r.authorName} avatarUrl={r.authorAvatarUrl} size={32} />
               <div className="rounded-2xl bg-card border border-border/50 px-3 py-2 flex-1">
                 <p className="text-xs font-semibold">{r.authorName}</p>
-                <p className="text-sm mt-0.5">{r.content}</p>
+                <p className="text-sm mt-0.5">{renderWithMentions(r.content)}</p>
               </div>
             </div>
           ))}
@@ -472,18 +475,17 @@ function PostComposer({ onPosted }: { onPosted: (post: CommunityPost) => void })
         ))}
       </div>
 
-      <textarea
+      <MentionTextarea
         autoFocus
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={setContent}
         placeholder={
-          postType === "RECOGNITION" ? "Who are you recognizing and why?" :
-          postType === "MILESTONE"   ? "What milestone are you celebrating?" :
+          postType === "RECOGNITION" ? "Who are you recognizing and why? (type @ to mention)" :
+          postType === "MILESTONE"   ? "What milestone are you celebrating? (type @ to mention)" :
           postType === "ANNOUNCEMENT"? "What would you like to announce?" :
-          "Share an update with your team…"
+          "Share an update… type @ to mention a colleague"
         }
         rows={3}
-        className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
       />
 
       <div className="flex items-center justify-between border-t border-border/50 pt-3">
