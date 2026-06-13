@@ -10,6 +10,7 @@ export type UserRole =
   | "STAFF"
   | "FINANCE"
   | "IT_ADMIN"
+  | "CEO"
   | "SUPER_ADMIN";
 
 // ── EMS reference types ───────────────────────────────────────────────────────

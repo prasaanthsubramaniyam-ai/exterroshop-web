@@ -60,6 +60,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   HR:            "HR",
   MANAGER:       "Manager",
   STAFF:         "Staff",
+  CEO:           "CEO",
   EMPLOYEE_USER: "Employee",
 };
 
@@ -70,6 +71,7 @@ export const ROLE_RING: Record<UserRole, string> = {
   HR:            "ring-teal-500",
   MANAGER:       "ring-blue-500",
   STAFF:         "ring-sky-500",
+  CEO:           "ring-rose-500",
   EMPLOYEE_USER: "ring-gray-300 dark:ring-gray-600",
 };
 
@@ -80,6 +82,7 @@ export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   HR:            "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
   MANAGER:       "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
   STAFF:         "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+  CEO:           "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
   EMPLOYEE_USER: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
@@ -156,7 +159,7 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         href: "/dashboard/reports",
         icon: BarChart3,
         matchPrefixes: ["/dashboard/reports"],
-        roles: ["MANAGER", "HR", "FINANCE", "SUPER_ADMIN"],
+        roles: ["MANAGER", "HR", "FINANCE", "CEO", "SUPER_ADMIN"],
       },
       {
         // Hub: User Mgmt, Onboard, Departments, Designations, Teams,
