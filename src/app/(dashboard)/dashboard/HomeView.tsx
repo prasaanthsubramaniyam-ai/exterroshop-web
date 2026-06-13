@@ -9,14 +9,15 @@ import { QuickActionsCard }      from "@/components/ems/dashboard/QuickActionsCa
 import { AnnouncementsCard }     from "@/components/ems/dashboard/AnnouncementsCard";
 import { PendingApprovalsCard }  from "@/components/ems/dashboard/PendingApprovalsCard";
 import { TeamAvailabilityCard }  from "@/components/ems/dashboard/TeamAvailabilityCard";
+import { EngagementTeaserCard }  from "@/components/ems/dashboard/EngagementTeaserCard";
+import type { UserRole } from "@/types";
 
-const MANAGER_ROLES = ["MANAGER", "HR", "SUPER_ADMIN"] as const;
+const MANAGER_ROLES: UserRole[] = ["MANAGER", "HR", "SUPER_ADMIN"];
 
 export function HomeView() {
   const { user } = useAuth();
-  const isManagerAbove = MANAGER_ROLES.includes(
-    (user?.role ?? "") as (typeof MANAGER_ROLES)[number]
-  );
+  const role = user?.role as UserRole | undefined;
+  const isManagerAbove = MANAGER_ROLES.includes(role as UserRole);
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -33,17 +34,26 @@ export function HomeView() {
           <LeaveBalanceCard />
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions — role-personalized */}
         <QuickActionsCard />
 
-        {/* Announcements — full-width in main column */}
+        {/* Announcements */}
         <AnnouncementsCard />
       </div>
 
       {/* ── Right / Sidebar column (1/3 width on lg+) ── */}
       <div className="flex flex-col gap-4">
-        {isManagerAbove && <PendingApprovalsCard />}
-        <TeamAvailabilityCard />
+        {isManagerAbove ? (
+          <>
+            <PendingApprovalsCard />
+            <TeamAvailabilityCard />
+          </>
+        ) : (
+          <>
+            <EngagementTeaserCard />
+            <TeamAvailabilityCard />
+          </>
+        )}
       </div>
 
     </div>

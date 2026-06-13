@@ -1,29 +1,27 @@
 /**
- * EMS Navigation Architecture — flat primary nav.
+ * EMS Navigation Architecture — flat primary nav, max 9 items.
  *
- * The sidebar shows ONLY top-level modules; secondary navigation lives
- * inside each page (SectionTabs / hub cards). Every legacy route keeps
- * working — it is simply reached via in-page tabs instead of the sidebar.
+ * Design principles (from architecture review, June 2026):
+ *  - ≤9 sidebar items per role — research shows >10 causes discovery abandonment
+ *  - "My Work" consolidates Attendance + Leave + Approvals + Payslips + Corrections
+ *  - "Wellness" consolidates Beauty Services booking + Wellness programs
+ *  - Finance, IT, CMS are inside Admin hub — not primary nav items
+ *  - Approvals badge surfaces on My Work icon, not a separate nav entry
+ *  - Bottom mobile nav: Home | My Work | [FAB] | Engagement | ≡ Menu (drawer)
  */
 
 import {
   LayoutDashboard,
-  Clock,
-  CalendarOff,
-  CheckSquare,
+  Briefcase,
   Users,
-  BarChart3,
+  Sparkles,
   ShoppingBag,
-  Scissors,
-  UsersRound,
-  SlidersHorizontal,
-  UserCircle,
+  Heart,
+  BarChart3,
+  ShieldCheck,
   Settings,
   Fingerprint,
   MoreHorizontal,
-  Banknote,
-  Monitor,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/types";
@@ -34,17 +32,13 @@ export interface EmsNavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  /** Additional path prefixes that should highlight this item. */
   matchPrefixes?: string[];
-  /** Show a live badge: "count" = number pill, "dot" = presence dot */
   badge?: "count" | "dot";
-  /** Roles that can see this item. undefined = visible to all authenticated users */
   roles?: UserRole[];
 }
 
 export interface EmsNavSection {
   id: string;
-  /** Empty label = render items without a section header. */
   label: string;
   items: EmsNavItem[];
 }
@@ -53,8 +47,8 @@ export interface BottomNavItem {
   label: string;
   href: string;
   icon: LucideIcon | null;
-  /** Renders as a raised circular FAB in the center */
   isFab?: boolean;
+  isMenu?: boolean;
 }
 
 // ── Role metadata ─────────────────────────────────────────────────────────────
@@ -69,7 +63,6 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   EMPLOYEE_USER: "Employee",
 };
 
-/** Tailwind ring colour for each role — used on avatar in sidebar footer */
 export const ROLE_RING: Record<UserRole, string> = {
   SUPER_ADMIN:   "ring-purple-500",
   IT_ADMIN:      "ring-indigo-500",
@@ -80,7 +73,6 @@ export const ROLE_RING: Record<UserRole, string> = {
   EMPLOYEE_USER: "ring-gray-300 dark:ring-gray-600",
 };
 
-/** Subtle badge background for role chips */
 export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   SUPER_ADMIN:   "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
   IT_ADMIN:      "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
@@ -91,7 +83,7 @@ export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   EMPLOYEE_USER: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
-// ── Sidebar — single flat section ─────────────────────────────────────────────
+// ── Primary sidebar nav — 9 items max ────────────────────────────────────────
 
 export const EMS_NAV_SECTIONS: EmsNavSection[] = [
   {
@@ -104,25 +96,19 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         icon: LayoutDashboard,
       },
       {
-        label: "Attendance",
-        href: "/dashboard/attendance",
-        icon: Clock,
-        matchPrefixes: ["/dashboard/attendance"],
-      },
-      {
-        // In-page tabs: My Leave · Holidays
-        label: "Leave",
-        href: "/dashboard/leave",
-        icon: CalendarOff,
-        matchPrefixes: ["/dashboard/leave", "/dashboard/holidays"],
-      },
-      {
-        label: "Approvals",
-        href: "/dashboard/approvals",
-        icon: CheckSquare,
-        matchPrefixes: ["/dashboard/approvals"],
+        // Consolidates: Attendance · Leave · Approvals · Corrections · Payslips · Holidays
+        label: "My Work",
+        href: "/dashboard/my-work",
+        icon: Briefcase,
+        matchPrefixes: [
+          "/dashboard/my-work",
+          "/dashboard/attendance",
+          "/dashboard/leave",
+          "/dashboard/approvals",
+          "/dashboard/holidays",
+          "/dashboard/payslips",
+        ],
         badge: "count",
-        roles: ["MANAGER", "HR", "SUPER_ADMIN"],
       },
       {
         // In-page tabs: Team · Directory · Org Chart
@@ -136,45 +122,12 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         ],
       },
       {
-        // Hub page with module cards (Users, Departments, Designations, Teams,
-        // Roles & Permissions, Onboarding, Reporting Structure)
-        label: "Employee Management",
-        href: "/dashboard/admin",
-        icon: UsersRound,
-        matchPrefixes: ["/dashboard/admin", "/dashboard/users"],
-        roles: ["HR", "SUPER_ADMIN"],
-      },
-      {
-        // Hub page with module cards (Sports, Recognition, Polls,
-        // Celebrations, Surveys, Challenges, CSR, Learning, Wellness,
-        // Ideas, Clubs). Sports keeps its own /dashboard/sports route.
+        // Hub: Sports, Recognition, Polls, Celebrations, Surveys,
+        // Challenges, CSR, Learning, Wellness Programs, Ideas, Clubs
         label: "Engagement",
         href: "/dashboard/engagement",
         icon: Sparkles,
         matchPrefixes: ["/dashboard/engagement", "/dashboard/sports"],
-      },
-      {
-        label: "Reports",
-        href: "/dashboard/reports",
-        icon: BarChart3,
-        matchPrefixes: ["/dashboard/reports"],
-        roles: ["MANAGER", "HR", "SUPER_ADMIN"],
-      },
-      {
-        // In-page tabs: Expenses · Payroll (payroll tab gated to FINANCE/SA)
-        label: "Finance",
-        href: "/dashboard/finance/expenses",
-        icon: Banknote,
-        matchPrefixes: ["/dashboard/finance"],
-        roles: ["FINANCE", "SUPER_ADMIN", "MANAGER", "HR"],
-      },
-      {
-        // In-page tabs: Assets · Help Desk
-        label: "IT",
-        href: "/dashboard/it/assets",
-        icon: Monitor,
-        matchPrefixes: ["/dashboard/it"],
-        roles: ["IT_ADMIN", "SUPER_ADMIN"],
       },
       {
         // In-page tabs: Browse · Favorites · My Items · Sell · Chats · Calls
@@ -191,32 +144,42 @@ export const EMS_NAV_SECTIONS: EmsNavSection[] = [
         badge: "dot",
       },
       {
-        label: "Beauty Services",
+        // Covers Beauty Services booking (/wellness/*) + Wellness programs
+        label: "Wellness",
         href: "/wellness/dashboard",
-        icon: Scissors,
+        icon: Heart,
         matchPrefixes: ["/wellness"],
       },
       {
-        // In-page tabs: Content · Theme Editor · Audit Logs
-        label: "CMS",
-        href: "/dashboard/admin/cms",
-        icon: SlidersHorizontal,
-        matchPrefixes: [
-          "/dashboard/admin/cms",
-          "/dashboard/admin/theme",
-          "/dashboard/admin/audit-logs",
-        ],
-        roles: ["SUPER_ADMIN"],
+        // Employee: own data only. Manager+: team/org data.
+        label: "Reports",
+        href: "/dashboard/reports",
+        icon: BarChart3,
+        matchPrefixes: ["/dashboard/reports"],
+        roles: ["MANAGER", "HR", "FINANCE", "SUPER_ADMIN"],
       },
       {
-        // Settings page links to: Preferences · Security · Payslips · Profile
+        // Hub: User Mgmt, Onboard, Departments, Designations, Teams,
+        //      Roles & Permissions, Reporting Structure, CMS, Finance, IT
+        label: "Admin",
+        href: "/dashboard/admin",
+        icon: ShieldCheck,
+        matchPrefixes: [
+          "/dashboard/admin",
+          "/dashboard/users",
+          "/dashboard/finance",
+          "/dashboard/it",
+        ],
+        roles: ["HR", "FINANCE", "IT_ADMIN", "SUPER_ADMIN"],
+      },
+      {
+        // In-page tabs: Profile · Security · Notifications · Preferences
         label: "Settings",
         href: "/dashboard/settings",
         icon: Settings,
         matchPrefixes: [
           "/dashboard/settings",
           "/dashboard/profile",
-          "/dashboard/payslips",
         ],
       },
     ],
@@ -235,6 +198,14 @@ export const PEOPLE_TABS: SectionTabDef[] = [
   { label: "Team",      href: "/dashboard/team" },
   { label: "Directory", href: "/dashboard/directory" },
   { label: "Org Chart", href: "/dashboard/org-chart" },
+];
+
+export const MY_WORK_TABS: SectionTabDef[] = [
+  { label: "Attendance", href: "/dashboard/attendance" },
+  { label: "Leave",      href: "/dashboard/leave" },
+  { label: "Holidays",   href: "/dashboard/holidays" },
+  { label: "Payslips",   href: "/dashboard/payslips" },
+  { label: "Approvals",  href: "/dashboard/approvals", roles: ["MANAGER", "HR", "SUPER_ADMIN"] },
 ];
 
 export const LEAVE_TABS: SectionTabDef[] = [
@@ -283,12 +254,13 @@ export const SPORTS_HR_TABS: SectionTabDef[] = [
   { label: "Gallery",      href: "/dashboard/sports/hr/gallery" },
 ];
 
-// ── Bottom nav (mobile) ───────────────────────────────────────────────────────
+// ── Bottom nav (mobile) — 5 slots ─────────────────────────────────────────────
+// Slot 5 is "Menu" — opens MobileNavDrawer, not a page link
 
 export const BOTTOM_NAV_EMS: BottomNavItem[] = [
-  { label: "Home",       href: "/dashboard",            icon: LayoutDashboard },
-  { label: "Attendance", href: "/dashboard/attendance", icon: Clock },
-  { label: "Check In",   href: "/dashboard/attendance", icon: Fingerprint, isFab: true },
-  { label: "Leave",      href: "/dashboard/leave",      icon: CalendarOff },
-  { label: "More",       href: "/dashboard/profile",    icon: MoreHorizontal },
+  { label: "Home",       href: "/dashboard",           icon: LayoutDashboard },
+  { label: "My Work",    href: "/dashboard/my-work",   icon: Briefcase },
+  { label: "Check In",   href: "/dashboard/attendance", icon: Fingerprint,   isFab: true },
+  { label: "Engage",     href: "/dashboard/engagement", icon: Sparkles },
+  { label: "Menu",       href: "",                      icon: MoreHorizontal, isMenu: true },
 ];
