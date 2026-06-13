@@ -44,7 +44,7 @@ function Avatar({ name, url, size = 9 }: { name: string; url: string | null; siz
 
 // ── Give kudos modal ──────────────────────────────────────────────────────────
 
-function GiveKudosModal({
+export function GiveKudosModalExport({
   onClose,
   onSent,
 }: {
@@ -351,7 +351,7 @@ export function RecognitionView() {
       </div>
 
       {showGive && (
-        <GiveKudosModal
+        <GiveKudosModalExport
           onClose={() => setShowGive(false)}
           onSent={(r) => {
             setFeed((prev) => [r, ...(prev ?? [])]);
