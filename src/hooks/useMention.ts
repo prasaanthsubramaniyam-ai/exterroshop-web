@@ -21,35 +21,41 @@ export function useMention(value: string, onChange: (v: string) => void) {
   const [mention, setMention] = React.useState<MentionState>(IDLE);
   const [candidates, setCandidates] = React.useState<MentionUser[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [searchError, setSearchError] = React.useState(false);
   const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleChange = React.useCallback(
     (text: string, caretPos: number) => {
       onChange(text);
 
-      // Find the last @ before caret
+      // Find the last @ before caret that isn't followed by a newline
       const slice = text.slice(0, caretPos);
       const atIdx = slice.lastIndexOf("@");
       if (atIdx === -1) { setMention(IDLE); return; }
 
       const afterAt = slice.slice(atIdx + 1);
-      // Only activate if no space in the query (single-word trigger)
-      if (/\s/.test(afterAt) && afterAt.length > 0 && !afterAt.match(/^[\w ]{1,40}$/)) {
-        setMention(IDLE);
-        return;
-      }
+
+      // Dismiss if the text after @ contains a newline
+      if (afterAt.includes("\n")) { setMention(IDLE); return; }
 
       setMention({ active: true, query: afterAt, startIndex: atIdx });
+      setSearchError(false);
 
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(async () => {
-        if (!afterAt.trim()) { setCandidates([]); return; }
+        const trimmed = afterAt.trim();
+        if (!trimmed) {
+          setCandidates([]);
+          return;
+        }
         setLoading(true);
         try {
-          const res = await client.get<{ data: MentionUser[] }>(`/users/search?q=${encodeURIComponent(afterAt)}`);
-          setCandidates(Array.isArray(res.data.data) ? res.data.data : []);
+          const res = await client.get<{ data: MentionUser[] }>(`/users/search?q=${encodeURIComponent(trimmed)}`);
+          const list = res.data?.data;
+          setCandidates(Array.isArray(list) ? list : []);
         } catch (err) {
           console.error("[mention] search failed:", err);
+          setSearchError(true);
           setCandidates([]);
         } finally {
           setLoading(false);
@@ -67,6 +73,7 @@ export function useMention(value: string, onChange: (v: string) => void) {
       onChange(`${before}@${user.name}${after.startsWith(" ") ? "" : " "}${after}`);
       setMention(IDLE);
       setCandidates([]);
+      setSearchError(false);
     },
     [value, mention, onChange]
   );
@@ -74,7 +81,8 @@ export function useMention(value: string, onChange: (v: string) => void) {
   const dismiss = React.useCallback(() => {
     setMention(IDLE);
     setCandidates([]);
+    setSearchError(false);
   }, []);
 
-  return { mention, candidates, loading, handleChange, selectUser, dismiss };
+  return { mention, candidates, loading, searchError, handleChange, selectUser, dismiss };
 }

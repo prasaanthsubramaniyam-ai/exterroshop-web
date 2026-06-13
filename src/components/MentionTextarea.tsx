@@ -20,11 +20,15 @@ interface Props {
 function MentionDropdown({
   candidates,
   loading,
+  searchError,
+  query,
   onSelect,
   onDismiss,
 }: {
   candidates: MentionUser[];
   loading: boolean;
+  searchError: boolean;
+  query: string;
   onSelect: (u: MentionUser) => void;
   onDismiss: () => void;
 }) {
@@ -36,7 +40,8 @@ function MentionDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, [onDismiss]);
 
-  if (!loading && candidates.length === 0) return null;
+  // Don't show dropdown until user has typed at least 1 char after @
+  if (!query.trim()) return null;
 
   return (
     <div
@@ -46,6 +51,16 @@ function MentionDropdown({
       {loading && (
         <div className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" /> Searching…
+        </div>
+      )}
+      {!loading && searchError && (
+        <div className="px-3 py-2.5 text-sm text-destructive">
+          Could not reach server. Try again.
+        </div>
+      )}
+      {!loading && !searchError && candidates.length === 0 && (
+        <div className="px-3 py-2.5 text-sm text-muted-foreground">
+          No users found for &ldquo;{query}&rdquo;
         </div>
       )}
       {!loading && candidates.map((u) => (
@@ -98,7 +113,7 @@ export function MentionTextarea({
   onKeyDown,
   singleLine = false,
 }: Props) {
-  const { mention, candidates, loading, handleChange, selectUser, dismiss } =
+  const { mention, candidates, loading, searchError, handleChange, selectUser, dismiss } =
     useMention(value, onChange);
   const inputRef = React.useRef<HTMLTextAreaElement & HTMLInputElement>(null);
 
@@ -109,7 +124,7 @@ export function MentionTextarea({
     handleChange(el.value, el.selectionStart ?? el.value.length);
   };
 
-  const showDropdown = mention.active && (loading || candidates.length > 0);
+  const showDropdown = mention.active && mention.query.trim().length > 0;
 
   const commonProps = {
     value,
@@ -147,7 +162,9 @@ export function MentionTextarea({
       {showDropdown && (
         <MentionDropdown
           candidates={candidates}
+          query={mention.query}
           loading={loading}
+          searchError={searchError}
           onSelect={(u) => { selectUser(u); inputRef.current?.focus(); }}
           onDismiss={dismiss}
         />
