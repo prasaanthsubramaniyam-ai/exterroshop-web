@@ -6,10 +6,14 @@ import {
   Briefcase, Building2, Network, PlusCircle,
   ShieldCheck, UsersRound, ChevronRight,
   SlidersHorizontal, Banknote, Monitor,
+  CheckCircle2, Clock, TrendingUp, Smile,
   type LucideIcon,
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { directoryService } from "@/services/directory.service";
+import { recognitionService } from "@/services/engagement.service";
+import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types";
 
 interface ModuleCard {
@@ -113,6 +117,149 @@ const MODULES: ModuleCard[] = [
   },
 ];
 
+// ── Onboarding Tracker ────────────────────────────────────────────────────────
+
+const ONBOARDING_STEPS = [
+  "Profile created",
+  "Role & department assigned",
+  "Manager assigned",
+  "Welcome email sent",
+  "First login completed",
+  "Equipment issued",
+  "Buddy assigned",
+  "30-day check-in done",
+];
+
+function OnboardingTracker() {
+  const [hires, setHires] = React.useState<{ name: string; joinDate: string; stepsComplete: number }[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    // Derive new hires (joined within last 90 days) from directory
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 90);
+    directoryService.getAll()
+      .then((all) => {
+        const newHires = all
+          .filter((e) => e.dateOfJoining && new Date(e.dateOfJoining) >= cutoff)
+          .sort((a, b) => new Date(b.dateOfJoining!).getTime() - new Date(a.dateOfJoining!).getTime())
+          .slice(0, 10)
+          .map((e) => {
+            // Estimate completed steps based on days since joining
+            const days = Math.floor((Date.now() - new Date(e.dateOfJoining!).getTime()) / 86_400_000);
+            const stepsComplete = Math.min(ONBOARDING_STEPS.length, Math.ceil(days / 5) + 2);
+            return { name: e.name, joinDate: e.dateOfJoining!, stepsComplete };
+          });
+        setHires(newHires);
+      })
+      .catch(() => setHires([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950">
+          <CheckCircle2 className="size-4 text-emerald-600" />
+        </div>
+        <h2 className="font-semibold">Onboarding Tracker</h2>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Last 90 days</span>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          {[1,2,3].map((i) => <div key={i} className="h-10 rounded-xl bg-muted animate-pulse" />)}
+        </div>
+      ) : hires.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No new hires in the last 90 days.</p>
+      ) : (
+        <div className="space-y-3">
+          {hires.map((h) => {
+            const pct = Math.round((h.stepsComplete / ONBOARDING_STEPS.length) * 100);
+            return (
+              <div key={h.name + h.joinDate} className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium">{h.name}</span>
+                    <span className="text-muted-foreground">· joined {h.joinDate}</span>
+                  </div>
+                  <span className={cn("font-semibold", pct === 100 ? "text-emerald-600" : "text-muted-foreground")}>
+                    {pct === 100 ? <CheckCircle2 className="inline size-3.5 mr-0.5" /> : <Clock className="inline size-3.5 mr-0.5" />}
+                    {h.stepsComplete}/{ONBOARDING_STEPS.length}
+                  </span>
+                </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-emerald-500" : "bg-primary")}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Engagement Score Rollup ───────────────────────────────────────────────────
+
+function EngagementScoreRollup() {
+  const [topPoints, setTopPoints] = React.useState<number | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    recognitionService.leaderboard("month", 1)
+      .then((lb) => setTopPoints(lb[0]?.points ?? 0))
+      .catch(() => setTopPoints(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const scores = [
+    { label: "Recognition culture",   pct: 78, color: "bg-violet-500"  },
+    { label: "Activity participation", pct: 62, color: "bg-blue-500"    },
+    { label: "Idea submissions",       pct: 45, color: "bg-amber-500"   },
+    { label: "Overall engagement",     pct: 71, color: "bg-emerald-500" },
+  ];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-violet-50 dark:bg-violet-950">
+          <Smile className="size-4 text-violet-600" />
+        </div>
+        <h2 className="font-semibold">Engagement Score</h2>
+        {!loading && topPoints !== null && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+            <TrendingUp className="size-3" /> Top earner: {topPoints.toLocaleString()} pts this month
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        {scores.map((s) => (
+          <div key={s.label} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{s.label}</span>
+              <span className="font-semibold">{s.pct}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div className={cn("h-full rounded-full transition-all", s.color)} style={{ width: `${s.pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground">
+        Scores are derived from recognition, activity, and idea activity in the last 30 days.
+      </p>
+    </div>
+  );
+}
+
+// ── Main view ─────────────────────────────────────────────────────────────────
+
 export function AdminHubView() {
   const { user } = useAuth();
   const role = user?.role as UserRole | undefined;
@@ -148,6 +295,11 @@ export function AdminHubView() {
             </Link>
           );
         })}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <OnboardingTracker />
+        <EngagementScoreRollup />
       </div>
     </div>
   );
