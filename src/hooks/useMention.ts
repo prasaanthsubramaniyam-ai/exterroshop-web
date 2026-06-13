@@ -47,8 +47,9 @@ export function useMention(value: string, onChange: (v: string) => void) {
         setLoading(true);
         try {
           const res = await client.get<{ data: MentionUser[] }>(`/users/search?q=${encodeURIComponent(afterAt)}`);
-          setCandidates(res.data.data ?? []);
-        } catch {
+          setCandidates(Array.isArray(res.data.data) ? res.data.data : []);
+        } catch (err) {
+          console.error("[mention] search failed:", err);
           setCandidates([]);
         } finally {
           setLoading(false);
