@@ -35,9 +35,11 @@ import { formatTimeAgo } from "@/utils/format";
 import {
   recognitionService,
   activitiesService,
+  achievementService,
   type Recognition,
   type LeaderboardEntry,
   type Activity,
+  type EarnedAchievement,
 } from "@/services/engagement.service";
 import { rewardsService, type DeptLeaderboardEntry } from "@/services/rewards.service";
 
@@ -52,6 +54,8 @@ interface EngagementModule {
 }
 
 const MODULES: EngagementModule[] = [
+  { title: "Community Feed",      description: "Posts, reactions and team conversations",  href: "/dashboard/engagement/feed",            icon: Sparkles,      tint: "bg-primary/10 text-primary" },
+  { title: "Achievements",        description: "Badges, milestones and progress",          href: "/dashboard/engagement/achievements",    icon: Award,         tint: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
   { title: "Sports & Events",    description: "Tournaments, registrations and gallery",   href: "/dashboard/sports",                     icon: Trophy,        tint: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
   { title: "Celebrations",       description: "Birthdays, anniversaries and wishes",      href: "/dashboard/engagement/celebrations",    icon: Cake,          tint: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300" },
   { title: "Rewards & Recognition", description: "Kudos, badges and leaderboards",        href: "/dashboard/engagement/recognition",     icon: Star,          tint: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300" },
@@ -65,6 +69,7 @@ const MODULES: EngagementModule[] = [
   { title: "Clubs & Communities",description: "Interest groups and club feeds",          href: "/dashboard/engagement/clubs",           icon: UsersRound,    tint: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" },
   { title: "Rewards Store",      description: "Spend your points on great rewards",     href: "/dashboard/engagement/rewards",         icon: Gift,          tint: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" },
   { title: "Hall of Fame",       description: "Champions, badges and dept rankings",    href: "/dashboard/engagement/hall-of-fame",    icon: Trophy,        tint: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" },
+  { title: "Analytics",         description: "Points trends, participation insights",   href: "/dashboard/engagement/analytics",       icon: BarChart3,     tint: "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300" },
 ];
 
 // ── Avatar helper ─────────────────────────────────────────────────────────────
@@ -89,10 +94,12 @@ function Avatar({ name, url, size = 8 }: { name: string; url: string | null; siz
 function PointsHero({
   points,
   rank,
+  streak,
   onGiveKudos,
 }: {
   points: number | null;
   rank: number | null;
+  streak: number | null;
   onGiveKudos: () => void;
 }) {
   return (
@@ -114,11 +121,12 @@ function PointsHero({
           {/* Divider */}
           <div className="h-10 w-px bg-white/20" />
 
-          {/* Streak placeholder — will connect to V39 engagement_streaks */}
+          {/* Live streak from engagement_streaks */}
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-primary-foreground/70">Streak</p>
             <p className="mt-0.5 flex items-center gap-1.5 text-xl font-bold">
-              <Zap className="size-5 text-yellow-300" /> 0 days
+              <Zap className="size-5 text-yellow-300" />
+              {streak === null ? <span className="inline-block h-6 w-12 animate-pulse rounded-lg bg-white/20" /> : `${streak} day${streak !== 1 ? "s" : ""}`}
             </p>
           </div>
 
@@ -395,9 +403,11 @@ export function EngagementHubView() {
   const userId = user?.id;
 
   const [points, setPoints] = React.useState<number | null>(null);
+  const [streak, setStreak] = React.useState<number | null>(null);
   const [feed, setFeed] = React.useState<Recognition[] | null>(null);
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntry[] | null>(null);
   const [openActivities, setOpenActivities] = React.useState<Activity[] | null>(null);
+  const [recentAchievements, setRecentAchievements] = React.useState<EarnedAchievement[]>([]);
   const [showGive, setShowGive] = React.useState(false);
 
   // Derive my rank from leaderboard data
@@ -410,17 +420,63 @@ export function EngagementHubView() {
     recognitionService.myPoints().then(setPoints).catch(() => setPoints(0));
     recognitionService.feed(0, 10).then(setFeed).catch(() => setFeed([]));
     recognitionService.leaderboard("month", 20).then(setLeaderboard).catch(() => setLeaderboard([]));
-    // load all open activities to show the best 3
     activitiesService.list().then((all) =>
       setOpenActivities(all.filter((a) => a.status === "OPEN" && !a.myStatus))
     ).catch(() => setOpenActivities([]));
+    // Load streak from engagement_streaks (V40)
+    fetch("/api/engagement/streak", { headers: { Authorization: `Bearer ${localStorage.getItem("jwt") ?? ""}` }})
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => setStreak(d?.currentStreak ?? 0))
+      .catch(() => setStreak(0));
+    // Load recent achievements
+    achievementService.getMy().then((a) => setRecentAchievements(a.slice(0, 3))).catch(() => undefined);
   }, []);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
 
       {/* Points hero */}
-      <PointsHero points={points} rank={myRank} onGiveKudos={() => setShowGive(true)} />
+      <PointsHero points={points} rank={myRank} streak={streak} onGiveKudos={() => setShowGive(true)} />
+
+      {/* Quick-nav to new primary features */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: "Community Feed", emoji: "📡", href: "/dashboard/engagement/feed",         desc: "Posts & reactions"   },
+          { label: "Achievements",   emoji: "🏅", href: "/dashboard/engagement/achievements",  desc: "Your badges"         },
+          { label: "Leaderboard",    emoji: "🏆", href: "/dashboard/engagement/leaderboard",   desc: "Top performers"      },
+          { label: "Rewards Store",  emoji: "🛍️", href: "/dashboard/engagement/rewards",       desc: "Spend your points"   },
+        ].map((item) => (
+          <Link key={item.href} href={item.href}
+            className="flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card p-4 text-center hover:border-primary/40 hover:bg-muted/30 transition-all group">
+            <span className="text-2xl">{item.emoji}</span>
+            <span className="text-sm font-semibold group-hover:text-primary transition-colors">{item.label}</span>
+            <span className="text-[10px] text-muted-foreground">{item.desc}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Recent achievements showcase */}
+      {recentAchievements.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="flex items-center gap-2 font-semibold text-sm">
+              <Award className="size-4 text-amber-500" /> Recent achievements
+            </h2>
+            <Link href="/dashboard/engagement/achievements" className="text-xs text-primary hover:underline">View all →</Link>
+          </div>
+          <div className="flex gap-3 flex-wrap">
+            {recentAchievements.map((a) => (
+              <div key={a.id} className="flex items-center gap-2 rounded-xl bg-muted/30 border border-border px-3 py-2">
+                <span className="text-xl">{a.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold">{a.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{a.rarity.charAt(0) + a.rarity.slice(1).toLowerCase()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main two-column */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

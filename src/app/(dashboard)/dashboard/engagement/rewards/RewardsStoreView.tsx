@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Loader2, Gift, ShoppingBag, Clock, CheckCircle2,
-  XCircle, Plus, Award, Star, ToggleLeft, ToggleRight, X,
+  XCircle, Plus, Star, ToggleRight, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";

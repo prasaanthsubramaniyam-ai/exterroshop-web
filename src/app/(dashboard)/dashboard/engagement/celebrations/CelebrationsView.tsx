@@ -10,7 +10,6 @@ import {
   engagementService,
   type Celebration,
   type CelebrationWish,
-  type Occasion,
 } from "@/services/engagement.service";
 import { cn } from "@/lib/utils";
 

@@ -495,3 +495,204 @@ export const clubsService = {
     await client.delete(`/engagement/clubs/posts/${postId}`);
   },
 };
+
+// ── Community Feed ────────────────────────────────────────────────────────────
+
+export type PostType = "TEXT" | "PHOTO" | "VIDEO" | "RECOGNITION" | "MILESTONE" | "ANNOUNCEMENT" | "POLL_SHARE" | "ACHIEVEMENT_SHARE";
+export type PostVisibility = "EVERYONE" | "DEPARTMENT" | "TEAM" | "CLUB";
+export type ReactionType = "LIKE" | "CLAP" | "CELEBRATE" | "FIRE" | "INSIGHTFUL" | "LOVE";
+
+export interface CommunityPost {
+  id: number;
+  authorId: number;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  postType: PostType;
+  content: string | null;
+  mediaUrls: string[] | null;
+  visibility: PostVisibility;
+  pinned: boolean;
+  reactionCount: number;
+  commentCount: number;
+  reacted: boolean;
+  myReaction: ReactionType | null;
+  bookmarked: boolean;
+  createdAt: string;
+}
+
+export interface PostComment {
+  id: number;
+  postId: number;
+  parentCommentId: number | null;
+  authorId: number;
+  authorName: string;
+  authorAvatarUrl: string | null;
+  content: string;
+  reactionCount: number;
+  createdAt: string;
+  replies: PostComment[];
+}
+
+export interface ReactionToggleResponse {
+  reacted: boolean;
+  reaction: ReactionType;
+  counts: Record<ReactionType, number>;
+}
+
+export interface PageResult<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+}
+
+export const communityFeedService = {
+  async getFeed(page = 0, size = 20): Promise<PageResult<CommunityPost>> {
+    const res = await client.get<{ data: PageResult<CommunityPost> }>(`/feed?page=${page}&size=${size}`);
+    return unwrap<PageResult<CommunityPost>>(res);
+  },
+
+  async createPost(payload: {
+    postType?: PostType;
+    content?: string;
+    mediaUrls?: string[];
+    visibility?: PostVisibility;
+    clubId?: number;
+  }): Promise<CommunityPost> {
+    const res = await client.post<{ data: CommunityPost }>("/feed", payload);
+    return unwrap<CommunityPost>(res);
+  },
+
+  async deletePost(id: number): Promise<void> {
+    await client.delete(`/feed/${id}`);
+  },
+
+  async toggleReaction(id: number, reaction: ReactionType): Promise<ReactionToggleResponse> {
+    const res = await client.post<{ data: ReactionToggleResponse }>(`/feed/${id}/react?reaction=${reaction}`);
+    return unwrap<ReactionToggleResponse>(res);
+  },
+
+  async getComments(id: number, page = 0, size = 20): Promise<PostComment[]> {
+    const res = await client.get<{ data: PostComment[] }>(`/feed/${id}/comments?page=${page}&size=${size}`);
+    return unwrap<PostComment[]>(res);
+  },
+
+  async addComment(id: number, content: string, parentCommentId?: number): Promise<PostComment> {
+    const res = await client.post<{ data: PostComment }>(`/feed/${id}/comments`, { content, parentCommentId });
+    return unwrap<PostComment>(res);
+  },
+
+  async toggleBookmark(id: number): Promise<boolean> {
+    const res = await client.post<{ data: boolean }>(`/feed/${id}/bookmark`);
+    return unwrap<boolean>(res);
+  },
+};
+
+// ── Achievements ──────────────────────────────────────────────────────────────
+
+export interface EarnedAchievement {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  earnedAt: string;
+}
+
+export interface AchievementCatalog {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: "COMMON" | "UNCOMMON" | "RARE" | "EPIC" | "LEGENDARY";
+  triggerType: string;
+  triggerThreshold: number;
+  pointsReward: number;
+}
+
+export const achievementService = {
+  async getAll(): Promise<AchievementCatalog[]> {
+    const res = await client.get<{ data: AchievementCatalog[] }>("/achievements");
+    return unwrap<AchievementCatalog[]>(res);
+  },
+  async getMy(): Promise<EarnedAchievement[]> {
+    const res = await client.get<{ data: EarnedAchievement[] }>("/achievements/my");
+    return unwrap<EarnedAchievement[]>(res);
+  },
+  async getForUser(userId: number): Promise<EarnedAchievement[]> {
+    const res = await client.get<{ data: EarnedAchievement[] }>(`/achievements/user/${userId}`);
+    return unwrap<EarnedAchievement[]>(res);
+  },
+};
+
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+export type LeaderboardPeriod = "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ALL_TIME";
+
+export interface LeaderboardUser {
+  userId: number;
+  name: string;
+  avatarUrl: string | null;
+  department: string | null;
+  totalPoints: number;
+  rank: number;
+  departmentRank: number | null;
+  currentStreak: number;
+}
+
+export interface LeaderboardResult {
+  entries: LeaderboardUser[];
+  me: LeaderboardUser | null;
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
+}
+
+export const leaderboardService = {
+  async get(period: LeaderboardPeriod = "MONTHLY"): Promise<LeaderboardResult> {
+    const res = await client.get<{ data: LeaderboardResult }>(`/leaderboard?period=${period}`);
+    return unwrap<LeaderboardResult>(res);
+  },
+};
+
+// ── Hall of Fame ──────────────────────────────────────────────────────────────
+
+export interface HofEntry {
+  id: number;
+  userId: number;
+  userName: string;
+  avatarUrl: string | null;
+  department: string | null;
+  category: string;
+  periodLabel: string;
+  reason: string | null;
+  nominatedBy: number | null;
+  nominatorName: string | null;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  featured: boolean;
+  createdAt: string;
+  approvedAt: string | null;
+}
+
+export const hofService = {
+  async getFeatured(): Promise<HofEntry[]> {
+    const res = await client.get<{ data: HofEntry[] }>("/engagement/hall-of-fame/featured");
+    return unwrap<HofEntry[]>(res);
+  },
+  async getApproved(page = 0): Promise<HofEntry[]> {
+    const res = await client.get<{ data: HofEntry[] }>(`/engagement/hall-of-fame/approved?page=${page}`);
+    return unwrap<HofEntry[]>(res);
+  },
+  async getPending(page = 0): Promise<HofEntry[]> {
+    const res = await client.get<{ data: HofEntry[] }>(`/engagement/hall-of-fame/pending?page=${page}`);
+    return unwrap<HofEntry[]>(res);
+  },
+  async nominate(payload: { userId: number; category: string; periodLabel: string; reason: string }): Promise<HofEntry> {
+    const res = await client.post<{ data: HofEntry }>("/engagement/hall-of-fame/nominate", payload);
+    return unwrap<HofEntry>(res);
+  },
+  async process(id: number, status: "APPROVED" | "REJECTED", featured: boolean): Promise<HofEntry> {
+    const res = await client.patch<{ data: HofEntry }>(`/engagement/hall-of-fame/${id}/process`, { status, featured });
+    return unwrap<HofEntry>(res);
+  },
+};
