@@ -4,8 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, X, ChevronRight, ChevronLeft } from "lucide-react";
-import { useAppDispatch } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { toggleSidebar } from "@/store/slices/uiSlice";
+import { toggleDrawer } from "@/store/slices/aiSlice";
 import { UserDropdown } from "./UserDropdown";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { cn } from "@/lib/utils";
@@ -290,8 +291,9 @@ function Breadcrumbs({ pathname, searchOpen }: { pathname: string; searchOpen: b
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function Header() {
-  const dispatch  = useAppDispatch();
-  const router    = useRouter();
+  const dispatch    = useAppDispatch();
+  const router      = useRouter();
+  const aiDrawerOpen = useAppSelector((s) => s.ai.isDrawerOpen);
   const pathname  = usePathname();
   const [query, setQuery]         = React.useState("");
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -380,7 +382,26 @@ export function Header() {
         </button>
 
         <NotificationBell />
+        <div className="hidden h-6 w-px bg-border sm:block" aria-hidden />
         <UserDropdown />
+        <div className="hidden h-6 w-px bg-border sm:block" aria-hidden />
+
+        {/* Exterro AI button */}
+        <button
+          onClick={() => dispatch(toggleDrawer())}
+          aria-label={aiDrawerOpen ? "Close Exterro AI" : "Open Exterro AI"}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all",
+            "bg-gradient-to-r from-primary to-orange-500 text-white shadow-sm",
+            "hover:opacity-90 hover:shadow-md active:scale-95",
+            aiDrawerOpen && "opacity-80 shadow-none",
+            // Mobile: icon-only
+            "sm:px-3"
+          )}
+        >
+          <span className="text-sm">✦</span>
+          <span className="hidden sm:inline tracking-wide">Ask AI</span>
+        </button>
       </div>
 
       {/* Mobile search bar */}

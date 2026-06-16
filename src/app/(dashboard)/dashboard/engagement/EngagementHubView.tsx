@@ -424,7 +424,7 @@ export function EngagementHubView() {
       setOpenActivities(all.filter((a) => a.status === "OPEN" && !a.myStatus))
     ).catch(() => setOpenActivities([]));
     // Load streak from engagement_streaks (V40)
-    fetch("/api/engagement/streak", { headers: { Authorization: `Bearer ${localStorage.getItem("jwt") ?? ""}` }})
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8082/api/v1"}/engagement/streak`, { headers: { Authorization: `Bearer ${localStorage.getItem("jwt") ?? ""}` }})
       .then((r) => r.ok ? r.json() : null)
       .then((d) => setStreak(d?.currentStreak ?? 0))
       .catch(() => setStreak(0));

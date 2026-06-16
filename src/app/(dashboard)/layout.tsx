@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { AuthGate } from "./AuthGate";
 import { CmsProvider } from "@/context/CmsContext";
+import { AiProvider } from "@/providers/AiProvider";
 
 export default function DashboardLayout({
   children,
@@ -14,17 +15,19 @@ export default function DashboardLayout({
   return (
     <CmsProvider>
       <AuthGate>
-        <div className="flex min-h-screen bg-background">
-          <Sidebar />
-          <div className="flex min-h-screen flex-1 flex-col lg:pl-0">
-            <AnnouncementBar />
-            <Header />
-            <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 md:pb-10 lg:px-8">
-              <div className="mx-auto w-full max-w-[1440px]">{children}</div>
-            </main>
+        <AiProvider>
+          <div className="flex min-h-screen bg-background">
+            <Sidebar />
+            <div className="flex min-h-screen flex-1 flex-col lg:pl-0">
+              <AnnouncementBar />
+              <Header />
+              <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 md:pb-10 lg:px-8">
+                <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+              </main>
+            </div>
+            <BottomNav />
           </div>
-          <BottomNav />
-        </div>
+        </AiProvider>
       </AuthGate>
     </CmsProvider>
   );

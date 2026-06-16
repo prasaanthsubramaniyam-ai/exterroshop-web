@@ -15,6 +15,7 @@ import authReducer from "./slices/authSlice";
 import productReducer from "./slices/productSlice";
 import favoritesReducer from "./slices/favoritesSlice";
 import uiReducer from "./slices/uiSlice";
+import aiReducer from "./slices/aiSlice";
 
 /** SSR-safe storage that gracefully no-ops on the server */
 const createNoopStorage = () => ({
@@ -34,6 +35,7 @@ const rootReducer = combineReducers({
   products: productReducer,
   favorites: favoritesReducer,
   ui: uiReducer,
+  ai: aiReducer,
 });
 
 const persistedReducer = persistReducer(

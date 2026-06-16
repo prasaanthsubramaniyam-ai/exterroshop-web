@@ -10,6 +10,7 @@ import { AnnouncementsCard }     from "@/components/ems/dashboard/AnnouncementsC
 import { PendingApprovalsCard }  from "@/components/ems/dashboard/PendingApprovalsCard";
 import { TeamAvailabilityCard }  from "@/components/ems/dashboard/TeamAvailabilityCard";
 import { EngagementTeaserCard }  from "@/components/ems/dashboard/EngagementTeaserCard";
+import { AiDashboardCard }       from "@/components/ai/AiDashboardCard";
 import type { UserRole } from "@/types";
 
 const MANAGER_ROLES: UserRole[] = ["MANAGER", "HR", "SUPER_ADMIN"];
@@ -43,6 +44,9 @@ export function HomeView() {
 
       {/* ── Right / Sidebar column (1/3 width on lg+) ── */}
       <div className="flex flex-col gap-4">
+        {/* AI Assistant Card — always first in sidebar */}
+        <AiDashboardCard />
+
         {isManagerAbove ? (
           <>
             <PendingApprovalsCard />
