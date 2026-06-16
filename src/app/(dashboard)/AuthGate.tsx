@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { tokenStorage } from "@/utils/storage";
+import { ForcePasswordChange } from "@/components/auth/ForcePasswordChange";
 
 /**
  * Client-side auth guard for hydration consistency.
@@ -41,6 +42,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         <div className="size-10 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
       </div>
     );
+  }
+
+  if (user?.mustChangePassword) {
+    return <ForcePasswordChange onSuccess={() => refreshProfile()} />;
   }
 
   return <>{children}</>;

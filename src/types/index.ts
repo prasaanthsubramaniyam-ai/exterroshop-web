@@ -75,6 +75,7 @@ export interface User {
   skills?:           string[];
   emergencyContact?: string;   // JSON string {name, phone, relation}
   userStatus?:       UserStatus;
+  mustChangePassword?: boolean;
 }
 
 export type OfficeLocation = "Chennai" | "Coimbatore" | "Bangalore";

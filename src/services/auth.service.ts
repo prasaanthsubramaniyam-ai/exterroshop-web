@@ -49,4 +49,8 @@ export const authService = {
     });
     return unwrap<User>(response);
   },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await client.post("/auth/change-password", { currentPassword, newPassword });
+  },
 };
